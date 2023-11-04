@@ -4,7 +4,8 @@ import TileLayer from 'ol/layer/Tile.js';
 import View from 'ol/View.js';
 import {fromLonLat} from 'ol/proj';
 
-const api_key = "Auq_SqZQgdfeDG2KASU-Y6oEJSnW24BCEUMwipmqbIDz4s1o4HCwdavpde0bIwaY"; // Bellman
+const api_key = ""; // Bing key goes here... I wonder how I manage keys in React? 
+
 
 const lonlat = [104,17]
 const center = fromLonLat(lonlat, "EPSG:3857");
