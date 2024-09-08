@@ -42,9 +42,10 @@ export const Map = ({children, center, zoom}) => {
             info.style.top = pixel[1] + 'px';
             if (feature !== currentFeature) {
               info.style.visibility = 'visible';
-              info.innerText = feature.get('nam') + " " + feature.get('na2');
-              if (feature.layer != 'water') {
-                console.log(feature.layer);
+              if (feature.get('nam')) {
+                info.innerText = feature.get('nam') 
+                + " " + feature.get('na2')
+                + " " + feature.get('PNTCNT');
               }
             }
           } else {
