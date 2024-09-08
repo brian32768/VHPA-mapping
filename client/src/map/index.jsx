@@ -1,3 +1,3 @@
 export { Map, MapContext } from './map';
-export { Layers, TileLayer, VectorLayer } from './layers';
-export { OSMSource, VectorSource, XYZSource, BingSource } from './source';
+export { Layers, TileLayer, VectorTileLayer, VectorLayer, ImageTileLayer } from './layers';
+export { ImageTileSource, OSMSource, VectorSource, XYZSource, BingSource, MapboxSource, GeoapifySource } from './source';
