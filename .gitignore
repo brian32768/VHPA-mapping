@@ -1,6 +1,6 @@
 ARCHIVE/
-Dev/
-server/DMA_data/
+OLD_CODE/
+server/static/
 
 # Logs
 logs
