@@ -14,14 +14,14 @@ So, the basic architecture is
 For testing that means I will need a static server, I think I can do this
 most easily with just Node and Express. I could set up nginx but I don't need to.
 
-Old notes:
+Old notes from when this was a plain Javascript app:
 
 See ARCHIVE/project_notes.txt
 and ARCHIVE/presentation_notes.txt
 
 2024-08-02-- day 2 of retirement, and I now have time to actually look at this project.
 
-2023-11-02-- I have to rewrite because the API I wrote 10 years ago doesn't work now.
+2023-11-02-- I have to rewrite because the API I wrote 10 years ago doesn't work now. 
 The site looks like 1996 to me, I need to update it to 2023.
 
 ## Prerequisites
