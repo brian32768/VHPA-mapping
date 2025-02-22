@@ -1,6 +1,12 @@
 # VHPA project rebooted
 
-**Status**: Server works.
+**2025-02-21 status**:
+
+All data (including that not included in this repo) has been deployed
+to https://map.w6gkd.com/ which is hosted at Hostgator. But CORS
+
+TODO figure out how to send the correct CORS header to allow testing client and server on separate machines.
+
 Client runs but shows only a map, so I can test Openlayers 10.
 
 Architecture: 10 years ago I wrote this as a single page app in plain Javascript. Since then I've learned a ton of new stuff and wanted to try it all out here, including an Apollo backend. But you know, all that is a waste of time because it will make deployment more difficult. I won't have a resource rich server, I will have something like Bluehost or Hostmonster.
@@ -75,18 +81,24 @@ On the Desktop, what I normally have been doing on this project,
     npm install
     npm start
 
-It will look for content at the base URL of the server.
+Looks like I should find it running at http://localhost:8090/ -- yup there it is. 
+By default it's set to look for content at the base URL of the server.
+
+Nowadays I want it to use the server at https://map.w6gkd.com/ so I have changed
+countrymaps.jsx and mainmap.jsx but that's a TODO item.
 
 Debugging: The [Parcel site has tips.](https://parceljs.org/recipes/debugging/) 
 
 Parcel builds source maps. ("source maps" are used to support VS Code debugging.) Check the contents of the launch.json file; there will be the setup to define the source map location. Then run the VS Code debugger, by selecting "Launch client" and hitting F5. This will open the app in Chrome. You should be able to do all the usual breakpoint / single-step / look at values things like a real program. (Come on, it IS a "real program" jeez get some self-esteem.)
 
-I like to split the Terminal window and run client in the left side and server in the right.
+I like to split the Terminal window and run client in the left side and server in the right, when I need the server.
 
 ## Deployment
 
-I will come back and write this when there is something to deploy.
-It's going to be "copy the files to the web server" but in more detail.
+I think it's something like
+
+1. Put all the data in the data folder on the server.
+2. Copy all the files from the client/dist folder to the server.
 
 ## Resources
 

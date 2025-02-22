@@ -10,8 +10,8 @@ import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
 import { Fill, Icon, Stroke, Style, Text } from 'ol/style.js';
 //import { createMapboxStreetsV6Style } from "./mapbox-streets-v6-style";
-
-const URL_PROVINCES = "http://localhost:8080/geojson/provinces_count.geojson";
+import { DATASERVER } from '../settings';
+const URL_PROVINCES = DATASERVER + 'geojson/provinces_count.geojson';
 
 const countryStyle = (Style, Fill, Stroke, Icon, Text) => {
     const fill = new Fill({color: ''});

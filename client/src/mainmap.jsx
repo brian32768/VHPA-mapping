@@ -7,6 +7,7 @@ import { Style, Icon } from "ol/style";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import GeoJSON from "ol/format/GeoJSON";
+import { DATASERVER } from '../settings';
 
 /* 
 const defaultStyleMap = new OpenLayers.StyleMap({
@@ -99,7 +100,7 @@ function tileUrlFunction(bounds) {
     ]);
 */
           
-const URL_PROVINCES = "http://localhost:8080/geojson/provinces_count.geojson";
+const URL_PROVINCES = DATASERVER + "geojson/provinces_count.geojson";
 
 export const MainMap = () => {
     const [center, setCenter] = useState([104.5, 16.40]); // Indochina map center
