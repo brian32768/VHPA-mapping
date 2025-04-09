@@ -22,10 +22,10 @@ const App = () => {
                 <div id="countrymap">
                     <CountryMap />
                 </div>
-                <div id="province_data">
-                    <h2>GIA LAI</h2>
-                    <h3>Vietnam</h3>
-                    crash sites: <b>154</b>
+                <div id="province_data" style={{visibility:"hidden"}}>
+                    <h3><span id="province">GIA LAI</span></h3>
+                    <h4><span id="country">Vietnam</span></h4>
+                    crash sites: <b><span id="crashsites">154</span></b>
                 </div>
             </div>
 
@@ -56,7 +56,7 @@ const App = () => {
                         <div id="plot"><img width="180" height="180" src={chart} /></div>
                     </div>
 
-                    <div id="crash_picture"></div>
+                    <div id="crash_picture">*** Crash picture goes here ***</div>
                 </div>
             </div>
         </>

@@ -16,10 +16,12 @@ export const VectorSource = (url) => {
 }
 
 export const XYZSource = ({ url, attributions, maxZoom }) => {
+	// lots of other attributes possible here...
+	// refer to https://openlayers.org/en/latest/apidoc/module-ol_source_XYZ-XYZ.html
 	return new olSource.XYZ({ url, attributions, maxZoom });
 }
 
-export const ImageTileSource = () => {
+export const EsriWorldTopoMapSource = () => {
 	return new olSource.ImageTile({
         attributions:
           'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +

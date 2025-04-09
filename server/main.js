@@ -13,7 +13,11 @@ const BASE_URL = process.env.NODE_ENV === 'production'
 const app = express();
 const httpServer = http.createServer(app);
 
-app.use(cors());
+// testing this is fraught, be careful
+const cors_options = {
+    origin: "http://localhost:8090", // all client requests come from here
+}
+app.use(cors(cors_options));
 app.use(express.static(static_content))
 app.use('/DMA_data', serveIndex('static_content/DMA_data'));
 app.use('/geojson', serveIndex('static_content/geojson'));
@@ -21,3 +25,4 @@ app.use('/geojson', serveIndex('static_content/geojson'));
 app.listen({ port:PORT }, ()=>{
     console.log(`Running at ${BASE_URL}`);
 });
+

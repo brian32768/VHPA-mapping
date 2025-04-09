@@ -1,10 +1,19 @@
 import React, { useRef, useState, useEffect } from 'react';
 import * as ol from 'ol';
+import Style from 'ol/style/Style';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
 
 export const MapContext = React.createContext();
 
+const selectStyle = new Style({
+  stroke: new Stroke({
+    color: 'rgba(255, 255, 255, 0.7)',
+    width: 2,
+  }),
+});
 
-export const Map = ({children, center, zoom}) => {
+export const Map = ({children, id, center, zoom}) => {
     const mapRef = useRef();
     const [map, setMap] = useState(null);
     useEffect(() => {
@@ -22,43 +31,79 @@ export const Map = ({children, center, zoom}) => {
             controls: [],
             overlays: [popupOverlay],
         };
+        const info = document.getElementById('province_data');
+
         let mapObject = new ol.Map(options);
+        mapObject.id = id;
         mapObject.setTarget(mapRef.current);
+
+        let selected = null;
+        const displayFeatureInfo = (feature) => {
+          if (feature) {
+            if (feature !== selected) {
+              if (feature.get('nam')) {
+                const p = document.getElementById('province');
+                const c = document.getElementById('country');
+                const cs = document.getElementById('crashsites');
+                const countryCode = feature.get('na2')
+                let ctxt = '???';
+                if (countryCode == 'VM') { // Viet Nam
+                    ctxt = 'Viet Nam';
+                } else if (countryCode == 'CB') { // Cambodia
+                    ctxt = 'Cambodia';
+                } else if (countryCode == 'LA') { // Laos
+                    ctxt = 'Laos';  
+                }
+                p.innerText = feature.get('nam');
+                c.innerText = ctxt;
+                cs.innerText = feature.get('PNTCNT');
+                info.style = {visibility:'visible'};
+              }
+            }
+          }
+        };
+
+        // These events happen on either the country or main map
+
+        mapObject.on('pointermove', (e) => {
+          info.style = {visibility:'hidden'};
+          // deselect whatever is currently selected
+          if (selected !== null) {
+            try {
+              selected.setStyle(undefined);
+            } catch(err) {
+              console.log('rubbish! ' + err.message);
+            }
+          }
+          //  const pixel = mapObject.getEventPixel(e.originalEvent);
+          mapObject.forEachFeatureAtPixel(e.pixel, function(f) {
+            // BTW the other map is called 'main'
+            if (id == 'country') {
+              displayFeatureInfo(f);
+              selected = f;
+              //selectStyle.getFill().setColor(f.get('COLOR') || '#eeeeee');
+              try {
+                f.setStyle(selectStyle);
+              } catch(err) {
+                console.log('pity that ' + err.message);
+              }
+            }
+          })
+        });
+
         mapObject.on('singleclick', (e) => {
             const coordinate = e.coordinate;
+            const id = e.map.id;
+            if (id == 'country') {
+              const province_name = selected.get('nam') 
+              console.log(province_name)
+              // light up the province
+              // zoom the mainmap to the extent of this province
+            }
             console.log(coordinate);
         });
 
-        let currentFeature;
-        const displayFeatureInfo = (pixel, target) => {
-            const info = document.getElementById('province_data');
-            const feature = target.closest('.ol-control')
-            ? undefined
-            : mapObject.forEachFeatureAtPixel(pixel, function (feature) {
-                return feature;
-              });
-          if (feature) {
-            info.style.left = pixel[0] + 'px';
-            info.style.top = pixel[1] + 'px';
-            if (feature !== currentFeature) {
-              info.style.visibility = 'visible';
-              if (feature.get('nam')) {
-                info.innerText = feature.get('nam') 
-                + " " + feature.get('na2')
-                + " " + feature.get('PNTCNT');
-              }
-            }
-          } else {
-            info.style.visibility = 'hidden';
-          }
-          currentFeature = feature;
-        };
-        mapObject.on('pointermove', (e) => {
-            const pixel = mapObject.getEventPixel(e.originalEvent);
-            //console.log(pixel);
-            displayFeatureInfo(pixel, e.originalEvent.target);
-        });
-        setMap(mapObject);
+      setMap(mapObject);
         return () => mapObject.setTarget(undefined);
     }, []);
     
