@@ -78,13 +78,10 @@ export const Map = ({children, id, center, zoom}) => {
               const countryCode = f.get('na2')
               let fc = '#88888888';
               if (countryCode == 'VM') {
-                countrytxt = 'Viet Nam';
                 fc = '#95F5E080';
               } else if (countryCode == 'CB') {
-                countrytxt = 'Cambodia';
                 fc = '#D8B36580';
               } else if (countryCode == 'LA') {
-                countrytxt = 'Laos';
                 fc = '#5AB4AC80';  
               }
               try {
