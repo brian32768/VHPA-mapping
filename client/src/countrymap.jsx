@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import VectorSource from 'ol/Source/Vector';
+import VectorSource from 'ol/source/Vector.js';
 import { fromLonLat, get } from "ol/proj";
 import { Style, Icon } from "ol/style";
 import Feature from "ol/Feature";
@@ -127,7 +127,7 @@ export const CountryMap = () => {
             <Layers>
                 <VectorTileLayer source={MapboxSource()} style={mbStyle} zIndex={0} />
                 <VectorLayer source={ds_provinces} style={myStyle} zIndex={1} />
-                <VectorLayer source={ds_rectangle} style={boxStyle} zIndex={2} />
+                {/*<VectorLayer source={ds_rectangle} style={boxStyle} zIndex={2} />*/}
             </Layers>
         </Map>
         </>

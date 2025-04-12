@@ -6,16 +6,10 @@ import Stroke from 'ol/style/Stroke';
 
 export const MapContext = React.createContext();
 
-const selectStyle = new Style({
-  stroke: new Stroke({
-    color: 'rgba(255, 255, 255, 0.7)',
-    width: 2,
-  }),
-});
-
 export const Map = ({children, id, center, zoom}) => {
     const mapRef = useRef();
     const [map, setMap] = useState(null);
+    let selected_province_name = '';
     useEffect(() => {
         const popupOverlay = new ol.Overlay({
             element: document.getElementById('popup'),
@@ -37,57 +31,80 @@ export const Map = ({children, id, center, zoom}) => {
         mapObject.id = id;
         mapObject.setTarget(mapRef.current);
 
-        let selected = null;
+
         const displayFeatureInfo = (feature) => {
-          if (feature) {
-            if (feature !== selected) {
-              if (feature.get('nam')) {
-                const p = document.getElementById('province');
-                const c = document.getElementById('country');
-                const cs = document.getElementById('crashsites');
-                const countryCode = feature.get('na2')
-                let ctxt = '???';
-                if (countryCode == 'VM') { // Viet Nam
-                    ctxt = 'Viet Nam';
-                } else if (countryCode == 'CB') { // Cambodia
-                    ctxt = 'Cambodia';
-                } else if (countryCode == 'LA') { // Laos
-                    ctxt = 'Laos';  
-                }
-                p.innerText = feature.get('nam');
-                c.innerText = ctxt;
-                cs.innerText = feature.get('PNTCNT');
-                info.style = {visibility:'visible'};
-              }
+          const p = document.getElementById('province');
+          const c = document.getElementById('country');
+          const cs = document.getElementById('crashsites');
+          let countrytxt = '---';
+          let ccounttxt = '---';
+          info.style = {visibility:'hidden'};
+          if (feature && feature.get('nam')) {
+            const countryCode = feature.get('na2')
+            if (countryCode == 'VM') {
+              countrytxt = 'Viet Nam';
+            } else if (countryCode == 'CB') {
+              countrytxt = 'Cambodia';
+            } else if (countryCode == 'LA') {
+              countrytxt = 'Laos';
             }
+            info.style = {visibility:'visible'};
+
+            selected_province_name = feature.get('nam');
+            ccounttxt = feature.get('PNTCNT');
           }
+          p.innerText = selected_province_name;
+          c.innerText = countrytxt;
+          cs.innerText = ccounttxt;
         };
 
         // These events happen on either the country or main map
 
+        let selected = null;
         mapObject.on('pointermove', (e) => {
-          info.style = {visibility:'hidden'};
           // deselect whatever is currently selected
           if (selected !== null) {
             try {
               selected.setStyle(undefined);
+              selected = null;
             } catch(err) {
-              console.log('rubbish! ' + err.message);
+              console.log('deselect failed' + err);
             }
           }
           //  const pixel = mapObject.getEventPixel(e.originalEvent);
           mapObject.forEachFeatureAtPixel(e.pixel, function(f) {
             // BTW the other map is called 'main'
             if (id == 'country') {
-              displayFeatureInfo(f);
-              selected = f;
-              //selectStyle.getFill().setColor(f.get('COLOR') || '#eeeeee');
+              const countryCode = f.get('na2')
+              let fc = '#88888888';
+              if (countryCode == 'VM') {
+                countrytxt = 'Viet Nam';
+                fc = '#95F5E080';
+              } else if (countryCode == 'CB') {
+                countrytxt = 'Cambodia';
+                fc = '#D8B36580';
+              } else if (countryCode == 'LA') {
+                countrytxt = 'Laos';
+                fc = '#5AB4AC80';  
+              }
               try {
+                const selectStyle = new Style({
+                  stroke: new Stroke({
+                    color: 'rgba(25, 25, 25, 0.7)',
+                    width: 3,
+                  }),
+                  fill: new Fill({
+                    color: fc,
+                  }),
+                });
                 f.setStyle(selectStyle);
+                displayFeatureInfo(f);
+                selected = f;
               } catch(err) {
-                console.log('pity that ' + err.message);
+                console.log('renderFeature ' + err);
               }
             }
+            return true;
           })
         });
 
@@ -95,12 +112,11 @@ export const Map = ({children, id, center, zoom}) => {
             const coordinate = e.coordinate;
             const id = e.map.id;
             if (id == 'country') {
-              const province_name = selected.get('nam') 
-              console.log(province_name)
+              console.log(selected_province_name)
+              console.log(coordinate);
               // light up the province
               // zoom the mainmap to the extent of this province
             }
-            console.log(coordinate);
         });
 
       setMap(mapObject);
