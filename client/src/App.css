@@ -67,20 +67,20 @@ h2 {
     background-color: 0x111;
     height: 180px;
 }
-
 #province_data {
     padding-left: 15px;
     border: 2px solid #000000;
 }
-
 #crash_data {
     position: relative;
     background-color: #5FD2B5;
     border: 2px solid #000000;
 }
+
 #crash_text {
     float: left;
     padding-left: 15px;
+    font-weight: bold;
 }
 #crash_picture {
     position: absolute;

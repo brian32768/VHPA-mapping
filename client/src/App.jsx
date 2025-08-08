@@ -22,10 +22,12 @@ const App = () => {
                 <div id="countrymap">
                     <CountryMap />
                 </div>
-                <div id="province_data">
-                    <h2>GIA LAI</h2>
-                    <h3>Vietnam</h3>
-                    crash sites: <b>154</b>
+                <div id="province_data" visibility="true">
+                    <h3><span id="province_text">GIA LAI</span></h3>
+                    <h4><span id="country_text">Vietnam</span></h4>
+                    <div id="crash_data">
+                        <div id="crash_text">154</div>
+                    </div>
                 </div>
             </div>
 

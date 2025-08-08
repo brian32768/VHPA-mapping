@@ -20,14 +20,23 @@ export const XYZSource = ({ url, attributions, maxZoom }) => {
 }
 
 export const ImageTileSource = () => {
+	/* 2025-08-07 Murre Firefox required NVidia driver update (webgl error) */
 	return new olSource.ImageTile({
         attributions:
-          'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
+          'Tiles © <a href="https://services.arcgisonline.com/arcgis/' +
           'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
         url:
-          'https://server.arcgisonline.com/ArcGIS/rest/services/' +
+          'https://server.arcgisonline.com/arcgis/rest/services/' +
           'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
 	});
+	/*
+	return new olSource.ImageTile({
+		attributions:
+          '&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.',
+		url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+
+	});
+	*/
 }
 
 

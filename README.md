@@ -18,10 +18,12 @@ Old notes from when this was a plain Javascript app:
 See ARCHIVE/project_notes.txt
 and ARCHIVE/presentation_notes.txt
 
+2025-08-07-- Wow that year went fast! Sold house and moved! 
+
 2024-08-02-- day 2 of retirement, and I now have time to actually look at this project.
 
 2023-11-02-- I have to rewrite because the API I wrote 10 years ago doesn't work now. 
-The site looks like 1996 to me, I need to update it to 2023.
+The site looks like 1996 to me, I need to update it to 2023. no-- 2025!
 
 ## Prerequisites
 
@@ -40,7 +42,7 @@ Now using node v22.5.1 (npm v10.8.2)
 
 ## Major components
 
-client side
+Client side
 
 * Openlayers 10
 * React
@@ -48,22 +50,22 @@ client side
 * React-Router
 * Parcel bundler
 
-server side - there are no backend services here at all (yet), just some files.
+Server side - there are no backend services here at all (yet), just some files.
 
 * Node 22
 * Express
 
 ## Testing and debugging
 
-Run the static content server,
+Run the static content server, preferably from VSCode,
 
 ```bash
+nvm use v22.5.1
 cd server
 npm install
 npm start
 ```
-
-Then try http://localhost:8080/; this should give you some simple docs and links to test it.
+Then try http://localhost:8080/; this should give you some simple docs and links to test it. (In VSCode it will prompt you with the URL.)
 
 ### Browser app (A.K.A. the "client")
 

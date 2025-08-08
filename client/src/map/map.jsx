@@ -26,30 +26,36 @@ export const Map = ({children, center, zoom}) => {
         mapObject.setTarget(mapRef.current);
         mapObject.on('singleclick', (e) => {
             const coordinate = e.coordinate;
-            console.log(coordinate);
+            console.log('singleclick ' + coordinate);
         });
 
         let currentFeature;
         const displayFeatureInfo = (pixel, target) => {
-            const info = document.getElementById('province_data');
+            const province_data = document.getElementById('province_data');
             const feature = target.closest('.ol-control')
             ? undefined
             : mapObject.forEachFeatureAtPixel(pixel, function (feature) {
                 return feature;
               });
           if (feature) {
-            info.style.left = pixel[0] + 'px';
-            info.style.top = pixel[1] + 'px';
             if (feature !== currentFeature) {
-              info.style.visibility = 'visible';
+              province_data.style.visibility = 'visible';
               if (feature.get('nam')) {
-                info.innerText = feature.get('nam') 
-                + " " + feature.get('na2')
-                + " " + feature.get('PNTCNT');
+                  const province_text = document.getElementById('province_text');
+                  const country_text = document.getElementById('country_text');
+                  const crash_text = document.getElementById('crash_text');
+                  province_text.innerText = feature.get('nam');
+                  country_text.innerText = feature.get('na2');
+                  const count = feature.get('PNTCNT');
+                  if (count > 0) {
+                    crash_text.innerText = 'crash sites: ' + count;
+                  } else {
+                    crash_text.innerText = '';
+                  }
               }
             }
           } else {
-            info.style.visibility = 'hidden';
+            province_data.style.visibility = 'hidden';
           }
           currentFeature = feature;
         };
