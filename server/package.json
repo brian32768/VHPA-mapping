@@ -11,7 +11,9 @@
         "url": "https://github.com/brian32768/VHPA-mapping.git"
     },
     "license": "GPL3",
-    "contributors": [ "Brian H Wilson <brian@wildsong.biz>" ],
+    "contributors": [
+        "Brian H Wilson <brian@wildsong.biz>"
+    ],
     "bugs": {
         "url": "https://github.com/brian32768/VHPA-mapping/issues",
         "email": "brian@wildsong.biz"
@@ -25,6 +27,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.1.4",
         "express": "^4.18.2",
+        "serve-index": "^1.9.1",
         "serve-static": "^1.15.0"
     },
     "scripts": {

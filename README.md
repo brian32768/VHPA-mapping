@@ -1,10 +1,68 @@
 # VHPA project rebooted
 
-**Status**: Server works.
+## UI notes
+
+  logo             title bar (has position and a bar to control topo layer transparency)
+
+ country           main map
+   map  
+
+province           crash site details          chart control
+  info
+
+Roll over the country map and each province should highlight. There should be a red box showing the extent
+in the main map. The province info should also update. 
+
+Drag the extent box on the country map to pan around on the main map.
+
+Province info includes province name, country, and number of crashes in that province.
+
+In the main map the base should be an aerial or street map, with the DMA topo overlay
+
+The crash sites will bring up details when you click on them.
+Pictures are in the main website and just load here.
+
+The sliders on the chart control allows narrowing down the range of years displayed.
+
+There is a layer selection tool that lets you switch to street or aerial and it lets you
+switch the overlays on or off the provinces, crash sites, and topo layer.
+
+### Event handling
+
+Events (pointermove, click, zoom, etc) are handled in client/src/map/map.jsx
+
+## TODO
+
+New feature: It would be nice to have a search feature allowing searching on the document database
+New feature: More information on the pilots?
+New feature: More information on the helicopters might be nice.
+
+main map does not show DMA topos (commented out in mainmap.jsx)
+
+pinch / spread to zoom in and out on main map
+
+show crash sites (commented out in mainmap.jsx)
+
+click on crash site to show deets
+  
+clicking on main map does not work - debug shows latlon so it's catching the click
+
+clicking on the country map causes the country map to zoom SOMETIMES. It should make the main map zoom.
+
+double clicking on the country map causes it to zoom
+
+figure out how to send the correct CORS header to allow testing client and server on separate machines.
+
+**2025-02-22 status**:
+
+All data (including that not included in this repo) has been deployed
+to https://map.w6gkd.com/ which is hosted at Hostgator. But CORS
 
 Client runs but shows only a map, so I can test Openlayers 10.
 
-The basic architecture is
+Architecture: 10 years ago I wrote this as a single page app in plain Javascript. Since then I've learned a ton of new stuff and wanted to try it all out here, including an Apollo backend. But you know, all that is a waste of time because it will make deployment more difficult. I won't have a resource rich server, I will have something like Bluehost or Hostmonster.
+
+So, the basic architecture is
 
 * a single page React app
 * some data files (geojson) served as static content
@@ -34,10 +92,9 @@ Install nvm in three steps, crazy how easy this is compared to "apt", which inst
 ```bash
 $ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
 # log out and back in to refresh environment
-$ nvm install node
-.
-.
-Now using node v22.5.1 (npm v10.8.2)
+$ nvm install lts
+$ nvm use newest
+Now using node v22.14.1 (npm v10.9.2)
 ```
 
 ## Major components
@@ -57,17 +114,20 @@ Server side - there are no backend services here at all (yet), just some files.
 
 ## Testing and debugging
 
+### Server
+
 Run the static content server, preferably from VSCode,
 
 ```bash
 nvm use v22.5.1
 cd server
+nvm install --lts
 npm install
 npm start
 ```
 Then try http://localhost:8080/; this should give you some simple docs and links to test it. (In VSCode it will prompt you with the URL.)
 
-### Browser app (A.K.A. the "client")
+### Client (Browser app)
 
 On the Desktop, what I normally have been doing on this project,
 
@@ -75,18 +135,26 @@ On the Desktop, what I normally have been doing on this project,
     npm install
     npm start
 
-It will look for content at the base URL of the server.
+Today first I had to do "alias npm=npm.cmd" on Pearl since I have changed from git to cygwin bash.
+
+Looks like I should find it running at http://localhost:8090/ -- yup there it is. 
+By default it's set to look for content at the base URL of the server.
+
+Nowadays I want it to use the server at https://map.w6gkd.com/ so I have changed
+countrymaps.jsx and mainmap.jsx but that's a TODO item.
 
 Debugging: The [Parcel site has tips.](https://parceljs.org/recipes/debugging/) 
 
 Parcel builds source maps. ("source maps" are used to support VS Code debugging.) Check the contents of the launch.json file; there will be the setup to define the source map location. Then run the VS Code debugger, by selecting "Launch client" and hitting F5. This will open the app in Chrome. You should be able to do all the usual breakpoint / single-step / look at values things like a real program. (Come on, it IS a "real program" jeez get some self-esteem.)
 
-I like to split the Terminal window and run client in the left side and server in the right.
+I like to split the Terminal window and run client in the left side and server in the right, when I need the server.
 
 ## Deployment
 
-I will come back and write this when there is something to deploy.
-It's going to be "copy the files to the web server" but in more detail.
+I think it's like this:
+
+1. Put all the data in the data folder on the server.
+2. Copy all the files from the client/dist folder to the server.
 
 ## Resources
 

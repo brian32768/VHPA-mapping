@@ -1,12 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import * as ol from 'ol';
+import Style from 'ol/style/Style';
+import Fill from 'ol/style/Fill';
+import Stroke from 'ol/style/Stroke';
 
 export const MapContext = React.createContext();
 
-
-export const Map = ({children, center, zoom}) => {
+export const Map = ({children, id, center, zoom}) => {
     const mapRef = useRef();
     const [map, setMap] = useState(null);
+    let selected_province_name = '';
     useEffect(() => {
         const popupOverlay = new ol.Overlay({
             element: document.getElementById('popup'),

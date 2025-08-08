@@ -1,6 +1,7 @@
 ARCHIVE/
-Dev/
-server/DMA_data/
+OLD_CODE/
+server/static_content/DMA_data/
+package-lock.json
 
 # Logs
 logs

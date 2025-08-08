@@ -58,7 +58,7 @@ const App = () => {
                         <div id="plot"><img width="180" height="180" src={chart} /></div>
                     </div>
 
-                    <div id="crash_picture"></div>
+                    <div id="crash_picture">*** Crash picture goes here ***</div>
                 </div>
             </div>
         </>
