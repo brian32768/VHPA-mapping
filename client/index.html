@@ -1,17 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <link rel="shortcut icon" href="./assets/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
-    <title>Vietnam Helicopter Crashes</title>
-  </head>
-  <body>
-      <div id="app">
-        app is loading...
+<head>
+  <title>Vietnam Helicopter Crashes</title>
+
+  <!--jquery library, needed for the slider and for flot-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+  <!-- my javascript -->
+  <script type="module" src="maps.js"></script>
+  <link rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+
+  <div id="leftbar">
+    <div id="logo">
+      <center>
+        <a href="https://vhpa.org/"><img width="94" height="75" src="vhpalogo.gif"></a>
+      </center>
+    </div>
+    <div id="overviewmap" class="map"></div>
+    <div id="province_data">
+      <h2>PROVINCE</h2>
+      <h3>COUNTRY</h3>
+      crash sites: <b>000</b>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="titlebar">
+      <center>
+        <h1>Vietnam Helicopter Crash Sites</h1>
+      </center>
+      <div id="coords" style="position:absolute;left:5px;bottom:10px;">position</div>
+      <div id="map_controls">
+        <div class="slider" id="opacity_slider">
+          <span id="min2" class="slider-text"></span>
+          <span id="max2" class="slider-text"></span>
+        </div>
       </div>
-      <script type="module" src="./index.js"></script>
-  </body>
+    </div>
+
+    <div id="detailmap" class="map">
+    </div>
+
+    <div id="crash_data">
+      <div id="crash_text">
+        <h3>Click on a crash site on the map to see information here</h3>
+      </div>
+
+      <div id="plot-control">
+        <div class="slider" id="date_slider"></div>
+        <div id="plot"><img width="180" height="180" src="chart.png"></div>
+      </div>
+
+      <div id="crash_picture"></div>
+
+    </div>
+  </div>
+
+</body>
 </html>

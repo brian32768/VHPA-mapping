@@ -1,84 +1,21 @@
 {
-  "name": "@brian32768/react-vhpa",
-  "version": "3.0.0",
-  "contributors": [
-    "Brian H Wilson <brian@wildsong.biz>"
-  ],
-  "license": "GPL3",
-  "description": "React-based VHPA mapping site",
-  "keywords": [
-    "react",
-    "parcel",
-    "openlayers"
-  ],
-  "browserslist": [
-    "last 1 Chrome versions"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/brian32768/VHPA-mapping.git"
-  },
-  "bugs": {
-    "url": "https://github.com/brian32768/VHPA-mapping/issues",
-    "email": "brian@wildsong.biz"
-  },
-  "homepage": "https://github.com/brian32768/VHPA-mapping/#Readme",
-  "dependencies": {
-    "@tanstack/react-table": "^8.9.2",
-    "bootstrap": "^5.3.0",
-    "ol": "^10.6.0",
-    "react": "^18.2.0",
-    "react-bootstrap": "^2.7.4",
-    "react-data-grid": "^7.0.0-beta.34",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.13.0"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.22.5",
-    "@babel/core": "^7.22.5",
-    "@babel/plugin-transform-object-assign": "^7.12.13",
-    "@babel/preset-env": "^7.22.5",
-    "@babel/preset-react": "^7.22.5",
-    "@parcel/transformer-graphql": "^2.9.2",
-    "buffer": "^6.0.3",
-    "eslint": "^8.42.0",
-    "eslint-config-standard": "^13.0.1",
-    "eslint-config-standard-react": "^8.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^9.1.0",
-    "eslint-plugin-promise": "^4.3.1",
-    "eslint-plugin-react": "^7.22.0",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "eslint-plugin-standard": "^4.1.0",
-    "parcel": "^2.12.0",
-    "process": "^0.11.10",
-    "sharp": "^0.33.5"
-  },
-  "source": "index.html",
-  "scripts": {
-    "lint": "eslint .",
-    "test": "parcel serve test.html --open",
-    "start": "parcel serve -p 8090 index.html",
-    "build": "parcel build --dist-dir public --public-url /",
-    "clean": "rm -rf dist node_modules .parcel-cache public"
-  },
-  "babel": {
-    "presets": [
-      "@babel/preset-env",
-      "@babel/preset-react",
-      "es2018"
-    ],
-    "plugins": [
-      "@babel/plugin-object-rest-spread",
-      [
-        "@babel/plugin-class-properties",
-        {
-          "loose": true
-        }
-      ],
-      "@babel/plugin-transform-async-to-generator"
-    ]
+    "name": "bing-maps",
+    "dependencies": {
+      "ol": "^10.6.0"
+    },
+    "devDependencies": {
+      "@babel/cli": "^7.22.5",
+      "@babel/core": "^7.22.5",
+      "@babel/plugin-transform-object-assign": "^7.12.13",
+      "@babel/preset-env": "^7.22.5",
+      "@babel/preset-react": "^7.22.5",
+      "@parcel/transformer-graphql": "^2.9.2",
+      "parcel": "^2.12.0",
+      "sharp": "0.31.1"
+    },
+    "scripts": {
+      "start": "parcel serve -p 8091 index.html",
+      "build": "parcel build --dist-dir public --public-url /",
+      "clean": "rm -rf dist node_modules .parcel-cache public"
+    }
   }
-}

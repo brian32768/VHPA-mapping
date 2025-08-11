@@ -1,0 +1,75 @@
+http://www.uwec.edu/webprojects/geog445/class.html
+
+Nice to fix when you click outside provinces vector layer should not change extent of detail map.
+
+work on topo layers to get them displaying at proper scales
+
+make sure topos that I have processed cover the AOI
+
+figure out how to serve the vector data
+should probably put it onto geoserver
+
+convert to geojson for now
+
+put crash data into provinces layer
+
+make countries symbolization work (3 colors)
+
+figure out what event types I need to symbolize
+and pick symbols for them
+
+find a nice slider control
+
+find a nice legend control thing??
+
+pick colors, the most important part!
+
+
+
+Target audience is 
+1 the members of VHPA
+2 people interested in the history
+
+For this class, assume all required data entry has been done, t
+I wont implement that part right now, it would burn through all my time :-)
+
+I will use ArcMap to add the spatial data to (enough of) the spreadsheet
+
+other data available includes
+
+vector layers
+  gazetteer of places
+  administrative boundaries
+
+geocomm.com
+
+historic DMA maps 1:250k, 1:50k
+contemporary base layer - probably google satellite map
+
+I have data for a period from approximately 1968 - 1974.
+After I get it put into spatial form I will know more about what the
+final project will look like
+
+I am thinking that I'd like to have an overview map that has a
+regional map and I think that all of my data will be in south vietnam,
+so I'd like to highlight where it is by using administrative
+boundaries and a legend showing number of events per area
+
+then you can click on an area to zoom to it on the detail area
+
+
+background
+this map site covers 1945 - 1976+ on 6 outline maps
+http://www.pbs.org/wgbh/amex/vietnam/maps/map_pop_01.html
+
+
+
+vmap0 for boundaries
+
+layer polbnda
+field na2
+
+vietnam = VM
+cambodia = CB
+laos = LA 
+

@@ -1,4 +1,6 @@
 ARCHIVE/
+examples/
+client-react/
 OLD_CODE/
 server/static_content/DMA_data/
 package-lock.json

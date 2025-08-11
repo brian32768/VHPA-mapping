@@ -1,0 +1,36 @@
+205
+AH-1	http://www.vhpamuseum.org/aircraft/images/Bell-AH-1-Cobrasm.gif
+AH-1G	http://www.vhpamuseum.org/aircraft/images/brokencobrasm.jpg
+CH-34
+CH-37B
+CH-3C
+CH-3E
+CH-43
+CH-46
+CH-46A
+CH-47A
+CH-47B
+CH-47C
+CH-53
+CH-53A
+CH-53D
+CH-54A	http://www.vhpamuseum.org/aircraft/images/vn26sm.jpg
+HH-3
+HH-3E
+HH-43B
+HH-43F
+HH-53B
+HH-53C
+OH-13S	http://www.vhpamuseum.org/flightschool/images/1sm.JPG
+OH-23G	http://www.vhpamuseum.org/aircraft/images/HillerOH23sm.jpg
+OH-58A	http://www.vhpamuseum.org/aircraft/images/OH-58A2sm.jpg
+OH-6	http://www.vhpamuseum.org/aircraft/images/loachart.jpg
+OH-6A
+SH-3A
+UH-1	http://www.vhpamuseum.org/aircraft/images/uh-1hhtsm.jpg
+UH-1A
+UH-1B	http://www.vhpamuseum.org/aircraft/images/uhsm.jpg
+UH-1C
+UH-1D	http://www.vhpamuseum.org/aircraft/images/1stUH1Dsm.jpg
+UH-1H	http://www.vhpamuseum.org/aircraft/images/Pb180069sm.jpg
+UH-34D

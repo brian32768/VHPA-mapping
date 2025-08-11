@@ -1,0 +1,66 @@
+powerpoint
+
+1- email contact, VHPA.org
+ arcgis -> openlayers
+
+ concept of site is to allow vets to tell their own stories, 
+ eventually giving them ability to directly edit content and upload media
+
+ no mapping site so far, so this is breaking new ground for them
+
+2-
+sources for data used
+
+ USGS "store" for DMA http://store.usgs.gov (See "advanced search")
+ NIMA vmap0 for provinces and borders http://geoengine.nga.mil
+ Crash data: Gary Roush, VHPA.org in Excel spreadsheet
+ 
+ WMS services from ArcGIS.com (overview) and Google.com (satellite)
+
+4- data processing
+
+ provinces from VMAP -- QGIS
+ spreadsheet into crash sites -- python script
+ ( various other python scripts)
+
+ GeoPDF files processed into tiles, tiles are just PNG files in folders
+ (see Mapping Vietnam at http://wildsong.biz)
+
+ dmaLayer = new OpenLayers.Layer.TMS( ...
+
+5- future work
+ more tiles (50k, and more coverage)
+ ground casualties, heliports, base camps, fire support bases...
+ users should be able to add data incl text and media
+
+5 minute movie script
+
+ start at vhpa.org
+ load page
+
+ start at upper left: logo links back to VHPA.org
+
+ stakeholders will want lat lon and probably want MGRS too
+
+ (topo layers don't load properly yet)
+
+ overview map uses ArcGIS map as background
+ provinces on both maps is from VMAP0, generalized in QGIS
+ and saved as geojson
+
+ processed geojson to add crash site counts per province
+
+ click anywhere on overview
+ 
+main map show sites
+color indicates service branch
+
+show air america sites
+
+"more info" links to pages on VHPA site, from spreadsheet data
+representative helicopter pictures are also at VHPA
+
+bar chart was generated directly from spreadsheet and converted to an image file
+
+zoom out to show slider
+

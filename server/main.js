@@ -15,7 +15,7 @@ const httpServer = http.createServer(app);
 
 // testing this is fraught, be careful
 const cors_options = {
-    origin: "http://localhost:8090", // all client requests come from here
+    origin: "http://localhost:8091", // all client requests come from here
 }
 app.use(cors(cors_options));
 app.use(express.static(static_content))
