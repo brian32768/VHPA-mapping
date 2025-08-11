@@ -14,22 +14,24 @@ import VectorSource from 'ol/source/Vector';
 import WebGLLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
 //import XYZ from 'ol/source/XYZ';
+import {OSM} from 'ol/source';
 import GeoJSON from 'ol/format/GeoJSON';
 import {defaults as defaultControls} from 'ol/control/defaults';
 import {defaults as defaultInteractions} from 'ol/interaction/defaults';
 import Select from 'ol/interaction/Select';
-import {OSM} from 'ol/source';
+import {altKeyOnly, click, pointerMove} from 'ol/events/condition';
+import Feature from 'ol/Feature';
 import { createStyleFunction } from 'ol/Feature';
 import MousePosition from 'ol/control/MousePosition';
 import {createStringXY} from 'ol/coordinate';
 
 // This was a test that draws a circle on the maps
-import Feature from 'ol/Feature';
 import Circle from 'ol/geom/Circle';
 import CircleStyle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import { createStringXY } from 'ol/coordinate';
+import { pointerMove } from 'ol/events/condition';
 
 window.onload = init
 
@@ -65,7 +67,14 @@ let ds_ppl_vm;
 let ds_ppl_cb;
 let ds_ppl_la;
 
-let ds_shapes;
+let currentFeature;
+
+// Symbolize using color to distinguish countries
+const lookup_color = {
+    "CB": "#D8B365",
+    "LA": "#5AB4AC",
+    "VM": "#95F5E0",
+};
 
 const image = new CircleStyle({
   radius: 25,
@@ -149,20 +158,22 @@ function init() {
 
     // Set data sources
 
+    /* testing only
     const ds_shapes = new VectorSource();
     ds_shapes.addFeature(new Feature(new Circle(INDOCHINA_CENTER, 1e6)));
     shapeLayer = new VectorLayer({
         source: ds_shapes,
         style: shapeStyle,
     });
+    */
 
     ds_crash_sites = new VectorSource({
         url: crash_sites,
         format: new GeoJSON(),
     });
-    ds_crash_sites.on('featuresloadend', handle_geojson_loaded);
+    ds_crash_sites.on('featuresloadend', handle_crashes_loaded);
     ds_crash_sites.on('featuresloaderror', function(event){
-        console.log('load error: crash_sites');
+        console.log('load error: crash_sites', event);
     });
 
     ds_provinces = new VectorSource({
@@ -171,13 +182,24 @@ function init() {
     });
     ds_provinces.on('featuresloadend', handle_provinces_loaded);
     ds_provinces.on('featuresloaderror', function(event){
-        console.log('load error: provinces');
+        console.log('load error: provinces', event);
     });
     // Set the color of each province by looking up the country attribute
-    //provincesStyleMap.addUniqueValueRules("default", "na2", lookup_color);
+    const provinceStyle = new Style({
+        fill: new Fill({
+            color: "#123456",
+        }),
+        stroke: new Stroke({color: 'black', width: 1}),
+    });
     provincesLayer = new VectorLayer({
         source: ds_provinces,
-        //style: provincesStyle,
+        style: function (feature) {
+            const countryCode = feature.get('na2');
+            const color = lookup_color[countryCode] || "#FF0000";
+            //console.log(color);
+            provinceStyle.getFill().setColor(color);
+            return provinceStyle;
+        },
         //projection: wgsProj,
         //strategies: [new ol.Strategy.Fixed()],
     });
@@ -235,12 +257,6 @@ function init_overview() {
         { context: overview_context }
     );
 
-    // Symbolize using color to distinguish countries
-    const lookup_color = {
-        "CB": { fillColor: "#D8B365" },
-        "LA": { fillColor: "#5AB4AC" },
-        "VM": { fillColor: "#95F5E0" },
-    };
 
     const selectStyle = new Style({
         pointRadius: 10,
@@ -256,44 +272,68 @@ function init_overview() {
         "temporary": selectStyle
     });
 
+    const selectClick = new Select({
+        condition: click,
+        style: selectStyle,
+        layers: [provincesLayer],
+    });
 
-   /*
+    //boxLayer = new ol.Layer.Boxes("Reference Frame");
+    overviewmap = new Map({
+        target: 'overviewmap',
+        layers: [
+            baseLayer,
+            //shapeLayer, // show a big red circle behind our other data
+            provincesLayer,
+            //boxLayer
+        ],
+        controls: [],
+        interactions: defaultInteractions(),
+        view: new View({center:INDOCHINA_CENTER, zoom:5}),
+        projection: mapProj,
+    });
+
     // On mouseover, highlight the province on map and show the province data           
+    overviewmap.on('pointermove', (event)=>{
+        if (event.dragging) {
+            currentFeature = undefined;
+            return;
+        }
+        //console.log("pointermove", event);
+        show_province_data(event.pixel, event.originalEvent.target);
+    });
+       /*
     const selectCtrl = new ol.Control.SelectFeature(provincesLayer, {
         hover: true,
         highlightOnly: true,
         renderIntent: "temporary",
         eventListeners: {
-            featurehighlighted: handle_mouseover_overview,
+            featurehighlighted: handle_hover_province,
         }
     });
     overviewmap.addControl(selectCtrl);
     selectCtrl.activate();
 */
-
     // On click, zoom the detail map
-    /*
-    overviewmap.events.registerPriority("click", overviewmap,
-        function (e) {
-            const lonlat = overviewmap.getLonLatFromLayerPx(e.xy);
-            zoom_detail(lonlat);
+    overviewmap.on('click', (e)=>{
+        if (currentFeature) {
+            const geom = currentFeature.getGeometry();
+            const extent = geom.getExtent();
+            console.log('clicked!', currentFeature.get('nam'), extent);
+            detailmap.getView().fit(extent, {
+                //padding: [40,40,40,40],
+                duration: 1000,
+            });
         }
-    );
-*/
-    //boxLayer = new ol.Layer.Boxes("Reference Frame");
-    const overviewmap = new Map({
-        target: 'overviewmap',
-        layers: [
-            baseLayer,
-            provincesLayer,
-            shapeLayer,
-            //boxLayer
-        ],
-        controls: [],
-        interactions: defaultInteractions().extend([new Select()]),
-        view: new View({center:INDOCHINA_CENTER, zoom:2}),
-        projection: mapProj,
     });
+
+    selectClick.on('select', (e)=>{
+        console.log('select',e);
+        //const lonlat = overviewmap.getLonLatFromLayerPx(e.xy);
+        //zoom_detail(lonlat);
+    });
+    overviewmap.addInteraction(selectClick)
+  
     //    bounds = overviewmap.getExtent();
     //    overviewmap.restrictedExtent = bounds;
     //console.log("okay overviewmap");
@@ -496,13 +536,13 @@ function init_detail() {
     //detailmap.zoomIn();
     //detailmap.zoomIn();
 
-    const detailmap = new Map({
+    detailmap = new Map({
         target: 'detailmap',
         layers: [
             new TileLayer({
                 source: new OSM(),
             }),
-            shapeLayer,
+            //shapeLayer,
           //baseLayer1,
           //baseLayer2,
           //dmaLayer,
@@ -522,7 +562,6 @@ function init_detail() {
         maxResolution: 156543.0339,
         //maxExtent: new ol.Bounds(-20037508, -20037508, 20037508, 20037508.34)
     });
-    console.log("shapeLayer is " + shapeLayer);
     //console.log("Zoom is now ", detailmap.getZoom());
 }
 
@@ -561,21 +600,6 @@ function overlay_getTileURL(bounds) {
     return url;
 }
 
-// =============================================================================
-
-// Handle the event when the mouse rolls over a city in our map.
-function handle_mouseover_overview(event) {
-    var attributes = event.feature.attributes;
-    //console.log(attributes);
-
-    country = "Vietnam"
-    if (attributes.na2 == 'CB') country = "Cambodia"
-    else if (attributes.na2 == 'LA') country = "Laos"
-
-    cnt = attributes.PNTCNT
-
-    show_province_data([attributes.nam, country, cnt])
-}
 
 // =============================================================================
 
@@ -583,16 +607,16 @@ function handle_mouseover_overview(event) {
 function zoom_detail(mapxy) {
     //// Center map and restrict extent changes
     //detailmap.setCenter(lonlat, 8, false, false);
-    //console.log("zoom to " + mapxy);
+    console.log("zoom to " + mapxy);
     //console.log("projection=", detailmap.projection);
     //mapxy.transform(detailmap.projection, wgsProj);
     //console.log("xform " + mapxy);
 
     //var mapcenter = new ol.LonLat(lonlat.lon, lonlat.lat)
     //mapcenter.transform(wgsProj, mapProj)
-    detailmap.setCenter(mapxy, 8, false, false)
+    //detailmap.setCenter(mapxy, 8, false, false)
 
-    drawbox(detailmap.getExtent());
+    //drawbox(detailmap.getExtent());
     //detailmap.restrictedExtent = bounds;
 }
 
@@ -613,15 +637,35 @@ function handle_mouseover_detail(event) {
 
 // =============================================================================
 
-function show_province_data(a) {
-    // a[0] = province, a[1] = country
-    console.log(a)
-    var html =
-        "<h2>" + a[0] + "</h2>"
-        + "<h3>" + a[1] + "</h3>"
-        + "crash sites: <b>" + a[2] + "</b>"
+function show_province_data(pixel, target) {
+    //console.log(pixel, target);
+    const feature = target.closest('.ol-control')
+        ? undefined
+        : overviewmap.forEachFeatureAtPixel(pixel, function (feature) {
+            //console.log('a feature', feature)
+            return feature;
+        });
+    if (feature) {
+        //console.log(feature.getProperties());
+        const na2 = feature.get('na2');
+        if (na2) {
+            let country = "???";
+            if (na2 == 'CB') country = "Cambodia"
+            else if (na2 == 'LA') country = "Laos"
+            else if (na2 == 'VM') country = "Vietnam";
+            else country = na2;
+            currentFeature = feature;
 
-    document.getElementById("province_data").innerHTML = html;
+            const province = feature.get('nam'); // no 'e'!
+            const cnt = feature.get('PNTCNT');
+            var html =
+                "<h2>" + province + "</h2>"
+                + "<h3>" + country + "</h3>"
+                + "crash sites: <b>" + cnt + "</b>"
+
+            document.getElementById("province_data").innerHTML = html;
+        }
+    }
 }
 
 // =============================================================================
@@ -689,23 +733,30 @@ function more_info() {
 
 //////////////////////////////////////////////////////////
 
-function handle_geojson_loaded(event) {
+// Called after the crash site data layer has finished loading.
+function handle_crashes_loaded(event) {
     console.log('loaded ' + event.target.url_);
-    //console.log(event);
+    console.log("# of features ", event.features.length);  
+    //console.log(event.features);
+    crashes_loaded = true // flag it's safe to use data now
+}
 
 let province_data = Array();
 
-// This handler is called after the province data layer has finished loading.
+// Called after the province data layer has finished loading.
 // Extract the province names to create a pick list.
 function handle_provinces_loaded(event) {
-//    features = layer.object.features
-//    console.log("handle_dataloaded() # of features ", features.length);  
-//    for (var i in features) {
-//        //console.log("feature attributes = ", i, features[i].attributes)
-//        var name = features[i].attributes.nam
-//        province_data.push(name)
-//    }
-    console.log(province_data);
+    console.log('loaded ' + event.target.url_);
+    console.log("# of features ", event.features.length);  
+  
+    let features = event.features;
+    for (let i in features) {
+        const attributes = features[i].getProperties();
+        let name = attributes.nam; // name without 'e'!
+        //console.log(name);
+        province_data.push(name)
+    }
+    //console.log(province_data);
 
     // This is an autocomplete list, I am not using it yet.
     // I really need one for all place names, not for provinces.
@@ -716,16 +767,6 @@ function handle_provinces_loaded(event) {
     //	{ source: province_data } );
 
     provinces_loaded = true // flag it's safe to use data now
-}
-
-//////////////////////////////////////////////////////////
-
-// This handler is called after the crash site data layer has finished loading.
-function handle_crashes_loaded(layer) {
-    var features = layer.object.features
-    //console.log("handle_crashes_loaded # of features ", features.length);  
-
-    crashes_loaded = true // flag it's safe to use data now
 }
 
 // This handler is called when the controls are moved on the sliders
