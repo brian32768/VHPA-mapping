@@ -1,5 +1,10 @@
 # VHPA project rebooted
 
+## Converting spreadsheets
+
+Load in Libre calc
+Save in CSV
+
 ## UI notes
 
   logo             title bar (has position and a bar to control topo layer transparency)

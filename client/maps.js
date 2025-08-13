@@ -17,6 +17,7 @@ import VectorLayer from 'ol/layer/Vector';
 import {OSM} from 'ol/source';
 import GeoJSON from 'ol/format/GeoJSON';
 import {defaults as defaultControls} from 'ol/control/defaults';
+import OverviewMap from "ol/control/OverviewMap";
 import {defaults as defaultInteractions} from 'ol/interaction/defaults';
 import Select from 'ol/interaction/Select';
 import {altKeyOnly, click, pointerMove} from 'ol/events/condition';
@@ -45,7 +46,7 @@ const ppl_la = geojson_server + 'la.geojson'; // Laos populated places
 const crash_sites = geojson_server + 'crash_data.geojson';
 //const maki_icons = "maki-icon-source/renders/";
 
-let overviewmap, detailmap;
+let overviewMapControl, detailmap;
 let mapProj, wgsProj;
 const dateSlider = "#date_slider";
 const opacitySlider = "#opacity_slider";
@@ -150,22 +151,34 @@ const shapeStyle = function (feature) {
   return styles[feature.getGeometry().getType()];
 };
 
-let shapeLayer;
+const info = document.getElementById('info');
+
+const display_crash_data = (pixel, target) => {
+    //console.log("crash data", pixel, target);
+    const feature = target.closest('.ol-control')
+        ? undefined
+        : detailmap.forEachFeatureAtPixel(pixel, function (feature) {
+            return feature;
+        });
+    if (feature) {
+        console.log('feature ', feature);
+        info.style.left = (pixel[0] + 200) + 'px';
+        info.style.top = (pixel[1] + 60) + 'px';
+        if (feature !== currentFeature) {
+        info.style.visibility = 'visible';
+        info.innerText = feature.get('unit') + ' ' + feature.get('picture');
+        }
+    } else {
+        info.style.visibility = 'hidden';
+    }
+    currentFeature = feature;
+}
 
 function init() {
     mapProj = new Projection("EPSG:900913");
     wgsProj = new Projection("EPSG:4326");
 
     // Set data sources
-
-    /* testing only
-    const ds_shapes = new VectorSource();
-    ds_shapes.addFeature(new Feature(new Circle(INDOCHINA_CENTER, 1e6)));
-    shapeLayer = new VectorLayer({
-        source: ds_shapes,
-        style: shapeStyle,
-    });
-    */
 
     ds_crash_sites = new VectorSource({
         url: crash_sites,
@@ -193,6 +206,8 @@ function init() {
     });
     provincesLayer = new VectorLayer({
         source: ds_provinces,
+        minZoom: 10,
+        maxZoom: 4,
         style: function (feature) {
             const countryCode = feature.get('na2');
             const color = lookup_color[countryCode] || "#FF0000";
@@ -200,8 +215,6 @@ function init() {
             provinceStyle.getFill().setColor(color);
             return provinceStyle;
         },
-        //projection: wgsProj,
-        //strategies: [new ol.Strategy.Fixed()],
     });
 
     ds_countries = new VectorSource({
@@ -221,14 +234,8 @@ function init() {
         format: new GeoJSON(),
     });
 
-    init_overview();
-    init_detail();
-    initcontrols();
-}
+    // overview map control
 
-// =============================================================================
-
-function init_overview() {
     // For different ESRI basemaps,
     // see http://arcgisonline.com/home/search.html?q=base%20map%20name&t=content
     const ds_arcgis = new ImageTileSource({
@@ -279,30 +286,20 @@ function init_overview() {
     });
 
     //boxLayer = new ol.Layer.Boxes("Reference Frame");
-    overviewmap = new Map({
+    overviewMapControl = new OverviewMap({
         target: 'overviewmap',
+        className: 'ol-custom-overviewmap',
         layers: [
             baseLayer,
             //shapeLayer, // show a big red circle behind our other data
             provincesLayer,
-            //boxLayer
         ],
-        controls: [],
-        interactions: defaultInteractions(),
-        view: new View({center:INDOCHINA_CENTER, zoom:5}),
-        projection: mapProj,
+        collapsed: false,
+        //interactions: defaultInteractions(),
+        //view: new View(),
     });
 
-    // On mouseover, highlight the province on map and show the province data           
-    overviewmap.on('pointermove', (event)=>{
-        if (event.dragging) {
-            currentFeature = undefined;
-            return;
-        }
-        //console.log("pointermove", event);
-        show_province_data(event.pixel, event.originalEvent.target);
-    });
-       /*
+    /*
     const selectCtrl = new ol.Control.SelectFeature(provincesLayer, {
         hover: true,
         highlightOnly: true,
@@ -311,11 +308,12 @@ function init_overview() {
             featurehighlighted: handle_hover_province,
         }
     });
-    overviewmap.addControl(selectCtrl);
+    overviewMapControl.addControl(selectCtrl);
     selectCtrl.activate();
 */
+/*
     // On click, zoom the detail map
-    overviewmap.on('click', (e)=>{
+    overviewMapControl.on('click', (e)=>{
         if (currentFeature) {
             const geom = currentFeature.getGeometry();
             const extent = geom.getExtent();
@@ -324,24 +322,20 @@ function init_overview() {
                 //padding: [40,40,40,40],
                 duration: 1000,
             });
+
+            // draw a red box on the overview map, too, to show extent.
         }
     });
-
-    selectClick.on('select', (e)=>{
-        console.log('select',e);
-        //const lonlat = overviewmap.getLonLatFromLayerPx(e.xy);
-        //zoom_detail(lonlat);
-    });
-    overviewmap.addInteraction(selectClick)
+*/
+    //overviewMapControl.addInteraction(selectClick)
   
-    //    bounds = overviewmap.getExtent();
-    //    overviewmap.restrictedExtent = bounds;
-    //console.log("okay overviewmap");
-}
+    //    bounds = overviewMapControl.getExtent();
+    //    overviewMapControl.restrictedExtent = bounds;
 
-// =============================================================================
+    //////////////////////////////////////////////////
+    //
+    // "detail" aka MAIN map, the big one on the right
 
-function init_detail() {
     const mapControls = [
         //new ol.Control.Navigation(),
         //new ol.Control.PanZoomBar(),
@@ -371,6 +365,7 @@ function init_detail() {
         getOpacity: 1,
         getColor: "#FFFF00"
     };
+    /*
     const selectStyle = new Style({
         pointRadius: "${getSize}",
         strokeColor: "#FFFF00",
@@ -378,7 +373,7 @@ function init_detail() {
         fillOpacity: 1,
         strokeOpacity: 1
     }, { context: detail_context });
-
+*/
     const crashContext = {
         getSize: zoomSize,
         getOpacity: layerOpacity,
@@ -467,6 +462,12 @@ function init_detail() {
         'deactivate': function (event) { console.log("Deactivated", event) },
     });
 */
+    const selectCrash = new Select({
+        condition: click,
+        style: selectStyle,
+        layers: [provincesLayer],
+    });
+
 
     /*crashControl =
         new ol.Control.SelectFeature(
@@ -515,6 +516,7 @@ function init_detail() {
       className: 'custom-mouse-position',
       target: document.getElementById('coords'),
     })
+    
 
     //mapcenter.transform(wgsProj, detailmap.projection);
     //console.log("Detail mapcenter ", mapcenter)
@@ -553,16 +555,45 @@ function init_detail() {
           //pplLaLayer,
         ],
         controls: defaultControls().extend([
-          mousePositionControl
+          mousePositionControl,
+          overviewMapControl
         ]),
-        view: new View({center:INDOCHINA_CENTER, zoom:4}),
+        view: new View({center:INDOCHINA_CENTER, zoom:5}),
         projection: mapProj,
         displayProjection: wgsProj,
         units: "m",
         maxResolution: 156543.0339,
         //maxExtent: new ol.Bounds(-20037508, -20037508, 20037508, 20037508.34)
     });
-    //console.log("Zoom is now ", detailmap.getZoom());
+
+    detailmap.on('singleclick', (e)=>{
+        if (e.dragging) {
+            currentFeature = undefined;
+            return;
+        }
+    // Highlight the province on overviewmap and show the province data           
+        display_crash_data(e.pixel, e.originalEvent.target);
+    });
+
+    /*
+    // The detailmap instantiates the overview map so this has to happen
+    // after creating the detailmap.
+    const omap = overviewMapControl.getMap()
+    console.log('omap is', omap)
+
+    // OverviewmapControl does not support many events directly
+    omap.on('pointermove', (e)=>{
+        if (e.dragging) {
+            currentFeature = undefined;
+            return;
+        }
+    // Highlight the province on overviewmap and show the province data           
+        //const pixel = [e.clientX, e.clientY];
+        //const mapXY = overviewMapControl.getMap().getCoordinateFromPixel(pixel);
+        console.log("pointermove", e);
+        show_province_data(e.pixel, e.originalEvent.target);
+    });
+    */
 }
 
 // =============================================================================
@@ -641,7 +672,7 @@ function show_province_data(pixel, target) {
     //console.log(pixel, target);
     const feature = target.closest('.ol-control')
         ? undefined
-        : overviewmap.forEachFeatureAtPixel(pixel, function (feature) {
+        : overviewMapControl.getMap().forEachFeatureAtPixel(pixel, function (feature) {
             //console.log('a feature', feature)
             return feature;
         });

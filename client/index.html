@@ -7,9 +7,27 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 
-  <!-- my javascript -->
-  <script type="module" src="maps.js"></script>
   <link rel="stylesheet" href="index.css" />
+
+  <style>
+      #info {
+        position: absolute;
+        display: inline-block;
+        height: auto;
+        width: auto;
+        z-index: 100;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 5px;
+        left: 50%;
+        transform: translateX(3%);
+        visibility: hidden;
+        pointer-events: none;
+      }
+  </style>
+  <script type="module" src="maps.js"></script>
 </head>
 
 <body>
@@ -42,6 +60,7 @@
       </div>
     </div>
 
+    <div id="info"></div>
     <div id="detailmap" class="map">
     </div>
 
