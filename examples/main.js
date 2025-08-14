@@ -1,6 +1,6 @@
 import {csv, html} from 'd3-fetch';
-import { toPoint } from 'mgrs';
 import Map from 'ol/Map';
+import Feature from 'ol/Feature';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
@@ -8,11 +8,16 @@ import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import {useGeographic} from 'ol/proj';
-import Collection from 'ol/Collection';
 import CircleStyle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
+import { Point } from 'ol/geom';
+
+import LoadData from './loaddata';
+import { LoadCrashData } from './loaddata';
+import { LoadPictures } from './loaddata';
+import Collection from 'ol/Collection';
 
 const pictures = new Array(); // Lookup table of helicopter pictures
 const crash_sites = new Array();
@@ -53,8 +58,11 @@ const geojsonObject = {
   ],
 }
 
+const featureCollection = new Collection();
+featureCollection.extend(new GeoJSON().readFeatures(geojsonObject));
+
 const vectorSource = new VectorSource({
-  features: new GeoJSON().readFeatures(geojsonObject),
+  features: featureCollection,
 });
 
 const vectorLayer = new VectorLayer({
@@ -62,7 +70,7 @@ const vectorLayer = new VectorLayer({
   style: styleFunction
 });
 
-function c(data,id) {
+function tableElement(data,id) {
   const table = document.getElementById(id);
 
   // Create table header
@@ -106,20 +114,10 @@ function c(data,id) {
 const createHtmlTable = (data, id) => {
   console.log('createHtmlTable', data)
   return new Promise((resolve,reject) => {
-    resolve(c(data,id));
+    resolve(tableElement(data,id));
   })
 }
 
-// Promise to turn the JSON object 'data'
-// into a lookup table 'lut' indexed by 'key'
-const makeLut = (data, key, lut) => {
-  return new Promise((resolve,reject) => {
-    resolve(data.forEach((row) => {
-      //console.log(key, row)
-      lut[row[key]] = row;
-    }));
-  })
-}
 
 // Promise to load a CSV file into memory and return it.
 const loadcsv = (url) => {
@@ -129,59 +127,13 @@ const loadcsv = (url) => {
   });
 }
 
-function togjson(data) {
-  console.log('togson')
-  let features = [];
-  data.forEach(row => {
-    const mgrsPoint = row['mgrs'];
-    let coordinate = [0,0]; // Null Island! Dangerous place!
-    try {
-      coordinate = toPoint(mgrsPoint);
-    } catch(err) {
-      console.log('Ignoring invalid MGRS', mgrsPoint)
-    }
-    const feature = {
-      type : 'Feature',
-      geometry: {
-        type: "Point",
-        coordinates: coordinate
-      },
-      properties: row
-    }
-    features.push(feature)
-  });
-  let fc = {
-    type: "FeatureCollection",
-    crs: {
-      type: 'name',
-      properties: {
-        name: 'EPSG:4326',
-      },
-    },
-    features: features
-  }
-  const featureCollection = new Collection(fc);
-  console.log(fc)
-  vectorSource.addFeatures(featureCollection);
-  return data;
-}
-
-// Promise to convert an Object into GeoJSON object.
-// The 'mgrs' property needs to be turned into Lat,Lon.
-const toGeoJSON = (data, featureCollection) => {
-  return new Promise((resolve,reject) => {
-    resolve(togjson(data, featureCollection));
-  })
-}
-
-
 loadcsv('http://localhost:8080/CSV/HelModels.csv')
   .then(data => createHtmlTable(data, 't1'))
-  .then(data => makeLut(data, 'model', pictures))
+  .then(data => LoadPictures(data, 'model', pictures))
 
+console.log('fc', vectorSource)
 loadcsv('http://localhost:8080/CSV/roushx.csv')
-  //.then(data => createHtmlTable(data,'t2'))
-  .then(data => toGeoJSON(data, crash_sites))
+  .then(data => LoadCrashData(data, vectorSource))
 
 
 const map = new Map({
@@ -196,4 +148,46 @@ const map = new Map({
     center: INDOCHINA_CENTER,
     zoom: 5,
   }),
+});
+
+const info = document.getElementById('info');
+
+let currentFeature;
+const displayFeatureInfo = function (pixel, target) {
+  const feature = target.closest('.ol-control')
+    ? undefined
+    : map.forEachFeatureAtPixel(pixel, function (feature) {
+        return feature;
+      });
+  if (feature) {
+    info.style.left = pixel[0] + 'px';
+    info.style.top = pixel[1] + 'px';
+    if (feature !== currentFeature) {
+      info.style.visibility = 'visible';
+      const p = feature.get('mgrs')
+      info.innerText = p;
+      console.log(feature.get('url'));
+    }
+  } else {
+    info.style.visibility = 'hidden';
+  }
+  currentFeature = feature;
+};
+
+map.on('pointermove', function (evt) {
+  if (evt.dragging) {
+    info.style.visibility = 'hidden';
+    currentFeature = undefined;
+    return;
+  }
+  displayFeatureInfo(evt.pixel, evt.originalEvent.target);
+});
+
+map.on('click', function (evt) {
+  displayFeatureInfo(evt.pixel, evt.originalEvent.target);
+});
+
+map.getTargetElement().addEventListener('pointerleave', function () {
+  currentFeature = undefined;
+  info.style.visibility = 'hidden';
 });

@@ -10,13 +10,34 @@
         width: 640px;
         height: 400px;
       }
-    </style>
-  </head>
+      #map {
+        position: relative;
+      }
+
+      #info {
+        position: absolute;
+        display: inline-block;
+        height: auto;
+        width: auto;
+        z-index: 100;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 5px;
+        left: 50%;
+        transform: translateX(3%);
+        visibility: hidden;
+        pointer-events: none;
+      }
+    </style>  </head>
   </head>
   <body>
   <script type="module" src="main.js"></script>
 
-  <div id="map" class="map">map goes here</div>
+  <div id="map" class="map">
+    <div id="info"></div>
+  </div>
 
   <h2>T1</h2>
   <div id="t1"></div>
