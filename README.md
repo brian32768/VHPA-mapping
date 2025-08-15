@@ -150,11 +150,10 @@ On the Desktop, what I normally have been doing on this project,
 
 Today first I had to do "alias npm=npm.cmd" on Pearl since I have changed from git to cygwin bash.
 
-Looks like I should find it running at http://localhost:8090/ -- yup there it is. 
+Looks like I should find it running at http://localhost:8091/ -- yup there it is. 
 By default it's set to look for content at the base URL of the server.
 
-Nowadays I want it to use the server at https://map.w6gkd.com/ so I have changed
-countrymaps.jsx and mainmap.jsx but that's a TODO item.
+Nowadays I want it to use the server at https://map.w6gkd.com/ 
 
 Debugging: The [Parcel site has tips.](https://parceljs.org/recipes/debugging/) 
 
@@ -166,8 +165,15 @@ I like to split the Terminal window and run client in the left side and server i
 
 I think it's like this:
 
-1. Put all the data in the static_content folder on the server.
-2. Copy all the files from the client/dist folder to the server.
+1. Test on Bellman. Start in source/VHPA_mapping/
+
+2. Copy all the data in the static_content folder on the server. (Takes time. Do only once.)
+
+    scp -r server/static_content/* w6gkd.com:map.w6gkd.com/data
+
+3. Copy all the files from the client/dist folder to the server.
+
+    scp -r client/dist/* w6gkd.com:map.w6gkd.com/
 
 ## Resources
 

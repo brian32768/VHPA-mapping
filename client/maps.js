@@ -43,9 +43,10 @@ window.onload = init
 useGeographic(); // use 'normal' coordinates in this project
 
 // URLs of data sources
-const data_server = (process.env.NODE_ENV === "production")
-    ? '/data/' // running on Hostgator
-    : 'http://localhost:8080/'; // TEST using node server in server/ folder.
+console.log("mode:", process.env.NODE_ENV)
+const data_server = (process.env.NODE_ENV === "development")
+    ? 'http://localhost:8080/' // TEST using node server in server/ folder.
+    : '/data/' // running on Hostgator
 const geojson_server = data_server + 'geojson/'; // hostgator
 
 const provinces = geojson_server + "provinces_count.geojson";
