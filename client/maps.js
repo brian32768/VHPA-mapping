@@ -8,7 +8,7 @@ import View from 'ol/View';
 import Style from 'ol/style/Style';
 import Projection from 'ol/proj/Projection';
 import TileLayer from 'ol/layer/Tile';
-import {fromLonLat} from 'ol/proj';
+import { useGeographic } from 'ol/proj';
 import ImageTileSource from 'ol/source/ImageTile';
 import VectorSource from 'ol/source/Vector';
 import WebGLLayer from 'ol/layer/WebGLTile';
@@ -34,7 +34,13 @@ import Stroke from 'ol/style/Stroke';
 import { createStringXY } from 'ol/coordinate';
 import { pointerMove } from 'ol/events/condition';
 
+import {csv, text} from 'd3-fetch';
+import Collection from 'ol/Collection';
+import { LoadCrashData } from './load_data';
+import { LoadPictures } from './load_data';
+
 window.onload = init
+useGeographic(); // use 'normal' coordinates in this project
 
 // URLs of data sources
 const geojson_server = 'http://localhost:8080/geojson/';
@@ -43,20 +49,17 @@ const countries = geojson_server + "countries.geojson";
 const ppl_vm = geojson_server + 'vm.geojson'; // Vietnam populated places
 const ppl_cb = geojson_server + 'cb.geojson'; // Cambodia populated places
 const ppl_la = geojson_server + 'la.geojson'; // Laos populated places
-const crash_sites = geojson_server + 'crash_data.geojson';
 //const maki_icons = "maki-icon-source/renders/";
 
 let overviewMapControl, detailmap;
-let mapProj, wgsProj;
 const dateSlider = "#date_slider";
 const opacitySlider = "#opacity_slider";
 let provinces_loaded = false;
-let crashes_loaded = false;
 
 let provincesLayer; // global so we can get at the feature list
 
 // The GEOGRAPHIC CENTER of the Indochina
-const INDOCHINA_CENTER = fromLonLat([104,16]); // Indochina map center
+const INDOCHINA_CENTER = [104,16]; 
 
 const mapMinZoom = 8;
 const mapMaxZoom = 16;
@@ -67,6 +70,7 @@ let ds_countries;
 let ds_ppl_vm;
 let ds_ppl_cb;
 let ds_ppl_la;
+const pictures = new Array(); // Lookup table of helicopter pictures
 
 let currentFeature;
 
@@ -152,8 +156,10 @@ const shapeStyle = function (feature) {
 };
 
 const info = document.getElementById('info');
+const crash_text = document.getElementById('crash_text')
+const crash_picture = document.getElementById('crash_picture')
 
-const display_crash_data = (pixel, target) => {
+const display_crash_site = (pixel, target) => {
     //console.log("crash data", pixel, target);
     const feature = target.closest('.ol-control')
         ? undefined
@@ -161,12 +167,55 @@ const display_crash_data = (pixel, target) => {
             return feature;
         });
     if (feature) {
-        console.log('feature ', feature);
+        console.log('feature ');
         info.style.left = (pixel[0] + 200) + 'px';
-        info.style.top = (pixel[1] + 60) + 'px';
+        info.style.top = (pixel[1] + 50) + 'px';
         if (feature !== currentFeature) {
-        info.style.visibility = 'visible';
-        info.innerText = feature.get('unit') + ' ' + feature.get('picture');
+            info.style.visibility = 'visible';
+
+            const mgrs = feature.get('mgrs');
+
+            const unit = feature.get('unit') + ' ';
+            info.innerHTML = unit? unit : 'no unit'
+
+            const sum = feature.get('short_sum');
+            let text = 
+                (sum
+                    ? ('Summary: <b>' + sum + '</b>') 
+                    : ('<b>No summary for ' + mgrs + '</b>')
+                );
+            text += '<br />'
+
+            // There are not very many pictures associated with
+            // crashes so fall back on generic pictures
+            let pix = feature.get('picture');
+            text += 'Picture:';
+
+
+            if (pix) {
+                text = 'picture: ' + pix + '<br/>' + text;
+                crash_text.innerHTML = text;
+            } else {
+                let model = feature.get('model')
+                crash_text.innerHTML = text;
+
+                pix = pictures[model]['url']
+                const a = document.createElement('a');
+                a.href = pix;
+                a.textContent = model;
+                a.target = '_blank';
+                crash_text.appendChild(a);
+            }
+
+            const detailed_url = feature.get('url');
+            if (detailed_url) {
+                const a = document.createElement('a');
+                a.href = detailed_url;
+                a.textContent = 'Incident report';
+                a.target = '_blank';
+                crash_text.appendChild(a);
+            }
+
         }
     } else {
         info.style.visibility = 'hidden';
@@ -174,19 +223,20 @@ const display_crash_data = (pixel, target) => {
     currentFeature = feature;
 }
 
+// Promise to load a CSV file into memory and return it.
+const loadcsv = (url) => {
+  return new Promise((resolve, reject) => {
+    //console.log('loading from', url);
+    resolve(csv(url));
+  });
+}
+
 function init() {
-    mapProj = new Projection("EPSG:900913");
-    wgsProj = new Projection("EPSG:4326");
 
     // Set data sources
 
     ds_crash_sites = new VectorSource({
-        url: crash_sites,
-        format: new GeoJSON(),
-    });
-    ds_crash_sites.on('featuresloadend', handle_crashes_loaded);
-    ds_crash_sites.on('featuresloaderror', function(event){
-        console.log('load error: crash_sites', event);
+        features: new Collection(),
     });
 
     ds_provinces = new VectorSource({
@@ -406,24 +456,20 @@ function init() {
     const crashLayer = new VectorLayer({
         source: ds_crash_sites,
         style: crashStyle,
-        projection: wgsProj,
         //strategies: [new ol.Strategy.Fixed()],
     });
     const pplVmLayer = new VectorLayer({
         source: ds_ppl_vm,
-        projection: wgsProj,
         //strategies: [new ol.Strategy.Fixed()],
     });
     pplVmLayer.set('layerName', 'Pop. places: Viet Nam');
     const pplCbLayer = new VectorLayer({
         source: ds_ppl_cb,
-        projection: wgsProj,
         //strategies: [new ol.Strategy.Fixed()],
     });
     pplCbLayer.set('layerName', 'Pop. places: Cambodia');
     const pplLaLayer = new VectorLayer({
         source: ds_ppl_la,
-        projection: wgsProj,
     });
     pplLaLayer.set('layerName', 'Pop. places: Laos');
 
@@ -517,10 +563,6 @@ function init() {
       target: document.getElementById('coords'),
     })
     
-
-    //mapcenter.transform(wgsProj, detailmap.projection);
-    //console.log("Detail mapcenter ", mapcenter)
-
     //detailmap.setCenter(mapcenter, 8, false, false);
 
     // draw a box to show extent of the overview map on the detail map.
@@ -537,6 +579,13 @@ function init() {
     //detailmap.zoomToExtent( mapBounds);
     //detailmap.zoomIn();
     //detailmap.zoomIn();
+
+    loadcsv('http://localhost:8080/CSV/HelModels.csv')
+    .then(data => LoadPictures(data, 'model', pictures))
+    .then(console.log("crash sites loaded"))
+
+    loadcsv('http://localhost:8080/CSV/roushx.csv')
+    .then(data => LoadCrashData(data, ds_crash_sites))
 
     detailmap = new Map({
         target: 'detailmap',
@@ -559,8 +608,6 @@ function init() {
           overviewMapControl
         ]),
         view: new View({center:INDOCHINA_CENTER, zoom:5}),
-        projection: mapProj,
-        displayProjection: wgsProj,
         units: "m",
         maxResolution: 156543.0339,
         //maxExtent: new ol.Bounds(-20037508, -20037508, 20037508, 20037508.34)
@@ -572,7 +619,7 @@ function init() {
             return;
         }
     // Highlight the province on overviewmap and show the province data           
-        display_crash_data(e.pixel, e.originalEvent.target);
+        display_crash_site(e.pixel, e.originalEvent.target);
     });
 
     /*
@@ -764,14 +811,6 @@ function more_info() {
 
 //////////////////////////////////////////////////////////
 
-// Called after the crash site data layer has finished loading.
-function handle_crashes_loaded(event) {
-    console.log('loaded ' + event.target.url_);
-    console.log("# of features ", event.features.length);  
-    //console.log(event.features);
-    crashes_loaded = true // flag it's safe to use data now
-}
-
 let province_data = Array();
 
 // Called after the province data layer has finished loading.
@@ -869,7 +908,6 @@ function zoomSize2() {
 // Use the date range slider, 
 // Return an opacity level (0..1) based on slider levels
 function layerOpacity(feature) {
-    if (!crashes_loaded) return 1; // visible if data has not finished loading
 
     var values = $(dateSlider).slider("option", "values")
 

@@ -2,6 +2,7 @@
     "name": "bing-maps",
     "dependencies": {
         "d3-fetch": "^3.0.1",
+        "mgrs": "^2.1.0",
         "ol": "^10.6.1"
     },
     "devDependencies": {

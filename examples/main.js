@@ -14,9 +14,8 @@ import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
 import { Point } from 'ol/geom';
 
-import LoadData from './loaddata';
-import { LoadCrashData } from './loaddata';
-import { LoadPictures } from './loaddata';
+import { LoadCrashData } from '../client/load_data';
+import { LoadPictures } from '../client/load_data';
 import Collection from 'ol/Collection';
 
 const pictures = new Array(); // Lookup table of helicopter pictures
@@ -161,7 +160,7 @@ const displayFeatureInfo = function (pixel, target) {
       });
   if (feature) {
     info.style.left = pixel[0] + 'px';
-    info.style.top = pixel[1] + 'px';
+    info.style.top = (pixel[1] - 30) + 'px';
     if (feature !== currentFeature) {
       info.style.visibility = 'visible';
       const p = feature.get('mgrs')
