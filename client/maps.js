@@ -43,7 +43,11 @@ window.onload = init
 useGeographic(); // use 'normal' coordinates in this project
 
 // URLs of data sources
-const geojson_server = 'http://localhost:8080/geojson/';
+const data_server = (process.env.NODE_ENV === "production")
+    ? '/data/' // running on Hostgator
+    : 'http://localhost:8080/'; // TEST using node server in server/ folder.
+const geojson_server = data_server + 'geojson/'; // hostgator
+
 const provinces = geojson_server + "provinces_count.geojson";
 const countries = geojson_server + "countries.geojson";
 const ppl_vm = geojson_server + 'vm.geojson'; // Vietnam populated places
@@ -159,6 +163,25 @@ const info = document.getElementById('info');
 const crash_text = document.getElementById('crash_text')
 const crash_picture = document.getElementById('crash_picture')
 
+function openModal(url) {
+    document.getElementById('modal-img').src = url;
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+// Optional: Close modal when clicking outside the box
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+// Optional: Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") closeModal();
+});
+
+
 const display_crash_site = (pixel, target) => {
     //console.log("crash data", pixel, target);
     const feature = target.closest('.ol-control')
@@ -167,7 +190,7 @@ const display_crash_site = (pixel, target) => {
             return feature;
         });
     if (feature) {
-        console.log('feature ');
+        //console.log('feature ');
         info.style.left = (pixel[0] + 200) + 'px';
         info.style.top = (pixel[1] + 50) + 'px';
         if (feature !== currentFeature) {
@@ -185,35 +208,51 @@ const display_crash_site = (pixel, target) => {
                     : ('<b>No summary for ' + mgrs + '</b>')
                 );
             text += '<br />'
+            crash_text.innerHTML = text;
 
             // There are not very many pictures associated with
-            // crashes so fall back on generic pictures
+            // crashes so we fall back on generic pictures
             let pix = feature.get('picture');
-            text += 'Picture:';
 
-
+            const img = document.createElement('img');
             if (pix) {
-                text = 'picture: ' + pix + '<br/>' + text;
-                crash_text.innerHTML = text;
+                img.src = pix;
+                img.alt = 'VHPA image from incident database.';
+                img.width = 200;
+                crash_text.appendChild(img);
+                openModal(pix);
             } else {
                 let model = feature.get('model')
-                crash_text.innerHTML = text;
+                const url = pictures[model]['url']
+                if (url) {
+                    img.src = url;
+                    img.alt = 'Helicopter database image.';
+                    img.width = 200;
+                    crash_text.appendChild(img);
+                    openModal(url);
 
-                pix = pictures[model]['url']
-                const a = document.createElement('a');
+                } else {
+                    const p = document.createElement('p');
+                    p.text = 'no picture for ' + mgrs;
+                    crash_text.appendChild(p);
+                }
+            }
+/*                const a = document.createElement('a');
                 a.href = pix;
                 a.textContent = model;
                 a.target = '_blank';
                 crash_text.appendChild(a);
-            }
+*/
 
             const detailed_url = feature.get('url');
             if (detailed_url) {
+                const p = document.createElement('p');
                 const a = document.createElement('a');
                 a.href = detailed_url;
                 a.textContent = 'Incident report';
                 a.target = '_blank';
-                crash_text.appendChild(a);
+                p.appendChild(a);
+                crash_text.appendChild(p);
             }
 
         }
@@ -580,11 +619,11 @@ function init() {
     //detailmap.zoomIn();
     //detailmap.zoomIn();
 
-    loadcsv('http://localhost:8080/CSV/HelModels.csv')
+    loadcsv(data_server + 'CSV/HelModels.csv')
     .then(data => LoadPictures(data, 'model', pictures))
     .then(console.log("crash sites loaded"))
 
-    loadcsv('http://localhost:8080/CSV/roushx.csv')
+    loadcsv(data_server + 'CSV/roushx.csv')
     .then(data => LoadCrashData(data, ds_crash_sites))
 
     detailmap = new Map({

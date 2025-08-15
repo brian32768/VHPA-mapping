@@ -1,5 +1,13 @@
 # VHPA project rebooted
 
+2025-08-15
+removed jquery reference from index.html
+
+  <!--jquery library, needed for the slider and for flot-->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
+
 ## Converting spreadsheets
 
 Load in Libre calc
@@ -158,7 +166,7 @@ I like to split the Terminal window and run client in the left side and server i
 
 I think it's like this:
 
-1. Put all the data in the data folder on the server.
+1. Put all the data in the static_content folder on the server.
 2. Copy all the files from the client/dist folder to the server.
 
 ## Resources
