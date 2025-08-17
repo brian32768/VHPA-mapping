@@ -114,10 +114,7 @@ Now using node v22.14.1 (npm v10.9.2)
 
 Client side
 
-* Openlayers 10
-* React
-* React-Bootstrap
-* React-Router
+* Openlayers 10+
 * Parcel bundler
 
 Server side - there are no backend services here at all (yet), just some files.
@@ -143,6 +140,8 @@ Then try http://localhost:8080/; this should give you some simple docs and links
 ### Client (Browser app)
 
 On the Desktop, what I normally have been doing on this project,
+code lives on Bellman and I work through VSCode which nicely handles
+port forwarding so I can test using the localhost URLs from Murre.
 
     cd client
     npm install
@@ -153,8 +152,6 @@ Today first I had to do "alias npm=npm.cmd" on Pearl since I have changed from g
 Looks like I should find it running at http://localhost:8091/ -- yup there it is. 
 By default it's set to look for content at the base URL of the server.
 
-Nowadays I want it to use the server at https://map.w6gkd.com/ 
-
 Debugging: The [Parcel site has tips.](https://parceljs.org/recipes/debugging/) 
 
 Parcel builds source maps. ("source maps" are used to support VS Code debugging.) Check the contents of the launch.json file; there will be the setup to define the source map location. Then run the VS Code debugger, by selecting "Launch client" and hitting F5. This will open the app in Chrome. You should be able to do all the usual breakpoint / single-step / look at values things like a real program. (Come on, it IS a "real program" jeez get some self-esteem.)
@@ -163,23 +160,23 @@ I like to split the Terminal window and run client in the left side and server i
 
 ## Deployment
 
-I think it's like this:
+Today it's like this.
 
 1. Test on Bellman. Start in source/VHPA_mapping/
 
 2. Copy all the data in the static_content folder on the server. (Takes time. Do only once.)
 
-    scp -r server/static_content/* w6gkd.com:map.w6gkd.com/data
+  scp -r server/static_content/* w6gkd.com:map.w6gkd.com/data
 
-3. Copy all the files from the client/dist folder to the server.
+3. Copy all the files from the client/public folder to the server.
 
-    scp -r client/dist/* w6gkd.com:map.w6gkd.com/
+  cd client
+  npm run build # clean then build in public/
+  scp -r public/* w6gkd.com:map.w6gkd.com/
 
 ## Resources
 
 book: [Express In Action](https://learning.oreilly.com/library/view/express-in-action/9781617292422/OEBPS/Text/kindle_split_001.html)
-
-book: [Just React!](https://acm.percipio.com/books/4d3d2a3a-29d2-4672-8e1d-17eb80a6c7b3#epubcfi(/6/6!/4/2%5Bepubmain%5D/2%5Bintro%5D/8/3:112)) by Hari Narayn (c)2022
 
 web: [Creating REST API in Node with Express and MySQL](https://dev.to/time2hack/creating-rest-api-in-node-js-with-express-and-mysql-21hk)
 

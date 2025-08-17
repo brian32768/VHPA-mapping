@@ -13,7 +13,8 @@ import ImageTileSource from 'ol/source/ImageTile';
 import VectorSource from 'ol/source/Vector';
 import WebGLLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
-//import XYZ from 'ol/source/XYZ';
+import XYZ from 'ol/source/XYZ';
+import TileGrid from 'ol/tilegrid/TileGrid';
 import {OSM} from 'ol/source';
 import GeoJSON from 'ol/format/GeoJSON';
 import {defaults as defaultControls} from 'ol/control/defaults';
@@ -38,12 +39,12 @@ import {csv, text} from 'd3-fetch';
 import Collection from 'ol/Collection';
 import { LoadCrashData } from './load_data';
 import { LoadPictures } from './load_data';
+import { createMinMaxResolution } from 'ol/resolutionconstraint';
 
 window.onload = init
-useGeographic(); // use 'normal' coordinates in this project
+useGeographic(); // use WGS84 coordinates in this project
 
 // URLs of data sources
-console.log("mode:", process.env.NODE_ENV)
 const data_server = (process.env.NODE_ENV === "development")
     ? 'http://localhost:8080/' // TEST using node server in server/ folder.
     : '/data/' // running on Hostgator
@@ -65,8 +66,10 @@ let provincesLayer; // global so we can get at the feature list
 
 // The GEOGRAPHIC CENTER of the Indochina
 const INDOCHINA_CENTER = [104,16]; 
+//const INDOCHINA_CENTER = [11800000, 1930000];
 
-const mapMinZoom = 8;
+
+const mapMinZoom = 5;
 const mapMaxZoom = 16;
 
 let ds_crash_sites;
@@ -221,7 +224,13 @@ const display_crash_site = (pixel, target) => {
                 img.alt = 'VHPA image from incident database.';
                 img.width = 200;
                 crash_text.appendChild(img);
-                openModal(pix);
+                //openModal(pix);
+            const a = document.createElement('a');
+            a.href = pix;
+            a.textContent = 'bigger photo';
+            a.target = '_blank';
+            crash_text.appendChild(a);
+
             } else {
                 let model = feature.get('model')
                 const url = pictures[model]['url']
@@ -230,7 +239,12 @@ const display_crash_site = (pixel, target) => {
                     img.alt = 'Helicopter database image.';
                     img.width = 200;
                     crash_text.appendChild(img);
-                    openModal(url);
+                    //openModal(url);
+            const a = document.createElement('a');
+            a.href = url;
+            a.textContent = 'bigger photo';
+            a.target = '_blank';
+            crash_text.appendChild(a);
 
                 } else {
                     const p = document.createElement('p');
@@ -238,12 +252,7 @@ const display_crash_site = (pixel, target) => {
                     crash_text.appendChild(p);
                 }
             }
-/*                const a = document.createElement('a');
-                a.href = pix;
-                a.textContent = model;
-                a.target = '_blank';
-                crash_text.appendChild(a);
-*/
+
 
             const detailed_url = feature.get('url');
             if (detailed_url) {
@@ -514,18 +523,23 @@ function init() {
     pplLaLayer.set('layerName', 'Pop. places: Laos');
 
     // Topo map overlay layer
-    /*
-    dmaLayer = new TMSLayer(
-        "Defense Mapping Agency", // title to show in layer switcher
-        'DMA_data/', // URL service endpoint
-        {
-            type: 'png',
-            getURL: overlay_getTileURL,
-            alpha: true,
-            isBaseLayer: false,
-        }
-    );
-*/
+    var ca_mau = [11614088.042046, 1005945.166361,11785765.071118, 1122589.238456]
+    // These numbers make no sense to me
+    const minX = -20037508, minY = -20037508 
+    const maxX = 20037508, maxY = 20037508.34
+    
+    const dmaLayer = new TileLayer({
+        title: 'DMA 250k topo',
+        opacity: 0.7,
+        //extent: ca_mau,
+        source: new XYZ({
+            attributions: 'USGS DMA NGA',
+            url: data_server + 'DMA_data/250k/{z}/{x}/{-y}.png',
+            minZoom: 5,
+            maxZoom: 12,
+            tileSize: [256, 256],
+        })
+    });
 
     // avoid pink tiles
     //ol.IMAGE_RELOAD_ATTEMPTS = 3;
@@ -598,8 +612,8 @@ function init() {
     // Put the mouse coords in a div.
     const mousePositionControl = new MousePosition({
       coordinateFormat: createStringXY(4),
-      projection: 'EPSG:4326',
       className: 'custom-mouse-position',
+      projection: "EPSG:4326",
       target: document.getElementById('coords'),
     })
     
@@ -636,7 +650,7 @@ function init() {
             //shapeLayer,
           //baseLayer1,
           //baseLayer2,
-          //dmaLayer,
+          dmaLayer,
           provincesLayer,
           crashLayer,
           //pplVmLayer,
@@ -648,8 +662,8 @@ function init() {
           overviewMapControl
         ]),
         view: new View({center:INDOCHINA_CENTER, zoom:5}),
-        units: "m",
-        maxResolution: 156543.0339,
+        //units: "m",
+        //maxResolution: 156543.0339,
         //maxExtent: new ol.Bounds(-20037508, -20037508, 20037508, 20037508.34)
     });
 
@@ -688,7 +702,7 @@ function roundNumber(num, dec) {
     return Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
 }
 
-// =============================================================================
+/*
 function overlay_getTileURL(bounds) {
 
     const res = this.map.getResolution();
@@ -697,27 +711,16 @@ function overlay_getTileURL(bounds) {
     const zoomlevel = this.map.getZoom();
     let url;
 
-    // Apparently Virtual Earth zoom level is different than everyone else's.
-    if (this.map.baseLayer.name == 'Virtual Earth Roads'
-        || this.map.baseLayer.name == 'Virtual Earth Aerial'
-        || this.map.baseLayer.name == 'Virtual Earth Hybrid') {
-        zoomlevel += 1;
-    }
-
     //console.log(zoomlevel);
     if (mapBounds.intersects(bounds) && zoomlevel >= mapMinZoom && zoomlevel <= mapMaxZoom) {
         url = this.url + "250k/" + zoomlevel + "/" + x + "/" + y + "." + this.type;
         // list only the files I can't find
         //console.log("url = ", url);
-    } else {
-        // I wonder what made me think this was a good idea?
-        // This URL is dead now.
-        url = "http://www.maptiler.org/img/none.png"; // pink tiles! oh no!
     }
 
     return url;
 }
-
+*/
 
 // =============================================================================
 

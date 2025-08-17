@@ -37,33 +37,22 @@
             target: 'map',
 
             layers: [
-                new ol.layer.Group({
-                        title: 'Base maps',
-                        layers: [
-                            new ol.layer.Tile({
-                                title: 'OpenStreetMap',
-                                type: 'base',
-                                visible: true,
-                                source: new ol.source.OSM()
-                            }),
-                        ]
+                new ol.layer.Tile({
+                    title: 'OpenStreetMap',
+                    type: 'base',
+                    visible: true,
+                    source: new ol.source.OSM()
                 }),
-                new ol.layer.Group({
+                new ol.layer.Tile({
                     title: 'Overlay',
-                    layers: [
-                        new ol.layer.Tile({
-                            title: 'Overlay',
-                            // opacity: 0.7,
-                            extent: ext,
-                            source: new ol.source.XYZ({
-                                attributions: 'USGS NGA DMA',
-                                minZoom: 5,
-                                maxZoom: 12,
-                                url: './{z}/{x}/{-y}.png',
-                                tileSize: [256, 256]
-                            })
-                        }),
-                    ]
+                    opacity: 0.7,
+                    source: new ol.source.XYZ({
+                        attributions: 'USGS NGA DMA',
+                        minZoom: 5,
+                        maxZoom: 12,
+                        url: './{z}/{x}/{-y}.png',
+                        tileSize: [256, 256]
+                    })
                 }),
             ],
             view: new ol.View({

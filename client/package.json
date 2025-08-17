@@ -17,7 +17,8 @@
     },
     "scripts": {
         "start": "parcel serve -p 8091 index.html",
-        "build": "parcel build --dist-dir public --public-url /",
-        "clean": "rm -rf dist node_modules .parcel-cache public"
+        "build:parcel": "parcel build index.html --dist-dir public --public-url ./ --no-source-maps",
+        "build": "npm run clean && npm run build:parcel",
+        "clean": "rm -rf dist public"
     }
 }
