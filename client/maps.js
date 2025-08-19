@@ -6,16 +6,15 @@
 import Map from 'ol/Map';
 import View from 'ol/View';
 import Style from 'ol/style/Style';
-import Projection from 'ol/proj/Projection';
 import TileLayer from 'ol/layer/Tile';
 import { useGeographic } from 'ol/proj';
+import ImageLayer from 'ol/layer/Image';
 import ImageTileSource from 'ol/source/ImageTile';
 import VectorSource from 'ol/source/Vector';
 import WebGLLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
 import XYZ from 'ol/source/XYZ';
-import TileGrid from 'ol/tilegrid/TileGrid';
-import {OSM} from 'ol/source';
+import {ImageArcGISRest, OSM} from 'ol/source';
 import GeoJSON from 'ol/format/GeoJSON';
 import {defaults as defaultControls} from 'ol/control/defaults';
 import OverviewMap from "ol/control/OverviewMap";
@@ -35,6 +34,7 @@ import Stroke from 'ol/style/Stroke';
 import { createStringXY } from 'ol/coordinate';
 import { pointerMove } from 'ol/events/condition';
 
+// For loading CSV files
 import {csv, text} from 'd3-fetch';
 import Collection from 'ol/Collection';
 import { LoadCrashData } from './load_data';
@@ -48,7 +48,8 @@ useGeographic(); // use WGS84 coordinates in this project
 const data_server = (process.env.NODE_ENV === "development")
     ? 'http://localhost:8080/' // TEST using node server in server/ folder.
     : '/data/' // running on Hostgator
-const geojson_server = data_server + 'geojson/'; // hostgator
+const geojson_server = data_server + 'geojson/';
+const feature_dma_l7014 = 'https://services1.arcgis.com/AhXvNWFdL7hH4TjJ/arcgis/rest/services/Vietnam_50k_L7014/FeatureServer/0';
 
 const provinces = geojson_server + "provinces_count.geojson";
 const countries = geojson_server + "countries.geojson";
@@ -57,7 +58,7 @@ const ppl_cb = geojson_server + 'cb.geojson'; // Cambodia populated places
 const ppl_la = geojson_server + 'la.geojson'; // Laos populated places
 //const maki_icons = "maki-icon-source/renders/";
 
-let overviewMapControl, detailmap;
+let overviewMap, detailmap;
 const dateSlider = "#date_slider";
 const opacitySlider = "#opacity_slider";
 let provinces_loaded = false;
@@ -385,17 +386,19 @@ function init() {
     });
 
     //boxLayer = new ol.Layer.Boxes("Reference Frame");
-    overviewMapControl = new OverviewMap({
+    overviewMap = new Map({
         target: 'overviewmap',
         className: 'ol-custom-overviewmap',
         layers: [
             baseLayer,
-            //shapeLayer, // show a big red circle behind our other data
             provincesLayer,
         ],
         collapsed: false,
         //interactions: defaultInteractions(),
-        //view: new View(),
+        view: new View({
+            center: INDOCHINA_CENTER,
+            zoom: 5,
+        }),
     });
 
     /*
@@ -440,19 +443,10 @@ function init() {
         //new ol.Control.PanZoomBar(),
         //new ol.Control.LayerSwitcher()
     ];
-    /*
-    // Google satellite layer.
-    const baseLayer1 = new ol.Layer.Google("Google Satellite", {
-        type: google.maps.MapTypeId.SATELLITE,
-        sphericalMercator: true, numZoomLevels: 14
-    });
+    const esriWorldImagery = 
+        'https://services.arcgisonline.com/ArcGIS/rest/services/' +
+        'World_Imagery/MapServer'
 
-    // Google hybrid layer.
-    const baseLayer2 = new ol.Layer.Google("Google Hybrid", {
-        type: google.maps.MapTypeId.HYBRID,
-        sphericalMercator: true, numZoomLevels: 14
-    });
-*/
     const defaultStyleMap = new Style({
         fillColor: "#FFFFFF",
         fillOpacity: 0,
@@ -523,27 +517,42 @@ function init() {
     pplLaLayer.set('layerName', 'Pop. places: Laos');
 
     // Topo map overlay layer
-    var ca_mau = [11614088.042046, 1005945.166361,11785765.071118, 1122589.238456]
-    // These numbers make no sense to me
-    const minX = -20037508, minY = -20037508 
-    const maxX = 20037508, maxY = 20037508.34
+    const minX = 104, minY = 8
+    const maxX = 109, maxY = 17
+
+    const MAX_RETRIES = 3;
     
     const dmaLayer = new TileLayer({
         title: 'DMA 250k topo',
         opacity: 0.7,
-        //extent: ca_mau,
+        extent: [minX, minY, maxX, maxY], // This reduces 404 errors
         source: new XYZ({
             attributions: 'USGS DMA NGA',
             url: data_server + 'DMA_data/250k/{z}/{x}/{-y}.png',
             minZoom: 5,
             maxZoom: 12,
             tileSize: [256, 256],
+
+            // This would deal with timeouts but I am pretty sure
+            // we're not getting timeouts... the issue is we request
+            // tiles that don't exist and get 404 errors.
+            tileLoadFunction: function (imageTile, src) {
+                let retries = 0;
+                function load() {
+                    imageTile.getImage().src = src;
+                }
+                imageTile.getImage().onerror = function () {
+                    if (retries < MAX_RETRIES) {
+                        retries++;
+                        setTimeout(load, 250);
+                    } else {
+                        console.log('tile load timed out after 3 retries');
+                    }
+                }
+                load();
+            }
         })
     });
-
-    // avoid pink tiles
-    //ol.IMAGE_RELOAD_ATTEMPTS = 3;
-    //ol.Util.onImageLoadErrorColor = "transparent";
 
     /*
     crashLayer.events.on({
@@ -567,7 +576,6 @@ function init() {
         style: selectStyle,
         layers: [provincesLayer],
     });
-
 
     /*crashControl =
         new ol.Control.SelectFeature(
@@ -647,19 +655,23 @@ function init() {
             new TileLayer({
                 source: new OSM(),
             }),
-            //shapeLayer,
-          //baseLayer1,
-          //baseLayer2,
-          dmaLayer,
-          provincesLayer,
-          crashLayer,
-          //pplVmLayer,
-          //pplCbLayer,
-          //pplLaLayer,
+            new ImageLayer({
+                source: new ImageArcGISRest({
+                    ratio: 1,
+                    params: {},
+                    url: esriWorldImagery,
+                })
+            }),
+            dmaLayer,
+            provincesLayer,
+            crashLayer,
+            //pplVmLayer,
+            //pplCbLayer,
+            //pplLaLayer,
         ],
         controls: defaultControls().extend([
           mousePositionControl,
-          overviewMapControl
+          //overviewMapControl, // this control does not work for us
         ]),
         view: new View({center:INDOCHINA_CENTER, zoom:5}),
         //units: "m",
