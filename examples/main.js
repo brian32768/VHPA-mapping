@@ -3,16 +3,21 @@ import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
-import GeoJSON from 'ol/format/GeoJSON';
+import ImageLayer from 'ol/layer/Image';
 import VectorLayer from 'ol/layer/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
+import {ImageArcGISRest, OSM} from 'ol/source';
+import MVT from 'ol/format/MVT';
+import GeoJSON from 'ol/format/GeoJSON';
 import VectorSource from 'ol/source/Vector';
+import VectorTileSource from 'ol/source/VectorTile';
 import {useGeographic} from 'ol/proj';
 import CircleStyle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import Style from 'ol/style/Style';
-import { Point } from 'ol/geom';
+import { applyStyle } from 'ol-mapbox-style';
+import LayerSwitcher from './layerswitcher';
 
 import { LoadCrashData } from '../client/load_data';
 import { LoadPictures } from '../client/load_data';
@@ -64,10 +69,45 @@ const vectorSource = new VectorSource({
   features: featureCollection,
 });
 
+// DMA topo map overlay layer
+const minX = 104, minY = 8
+const maxX = 109, maxY = 17
+
 const vectorLayer = new VectorLayer({
+  title: 'Crash sites',
   source: vectorSource,
-  style: styleFunction
+  style: styleFunction,
+  extent: [minX, minY, maxX, maxY], // This reduces 404 errors
 });
+
+const arcgis_server = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
+const arcgis_tile_server = 'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/'
+
+const arcgisWorldImageryLayer = 
+    new ImageLayer({
+        title: 'Esri World Imagery',
+        type: 'base',
+        source: new ImageArcGISRest({
+            ratio: 1,
+            params: {},
+            url: arcgis_server + 'World_Imagery/MapServer',
+        }),
+});
+
+const refVectorUrl = arcgis_tile_server + 'tile/{z}/{y}/{x}.pbf';
+const refStyleUrl = arcgis_tile_server + 'resources/styles/';
+console.log(refStyleUrl);
+const arcgisWorldImageryReferenceLayer = new VectorTileLayer({
+    title: 'Esri World Imagery Labels',
+    source: new VectorTileSource({
+        format: new MVT(),
+        url: refVectorUrl,
+        maxZoom: 20, 
+    }),
+    //style:
+    //opacity: 0.7,
+});
+applyStyle(arcgisWorldImageryReferenceLayer, refStyleUrl);
 
 function tableElement(data,id) {
   const table = document.getElementById(id);
@@ -138,8 +178,13 @@ loadcsv('http://localhost:8080/CSV/roushx.csv')
 const map = new Map({
   layers: [
     new TileLayer({
+      title: 'OpenStreetMap',
+      type: 'base',
       source: new OSM(),
     }),
+    arcgisWorldImageryLayer,
+    //arcgisWorldImageryHybridLayer,
+    arcgisWorldImageryReferenceLayer,
     vectorLayer,
   ],
   target: 'map',
@@ -149,6 +194,10 @@ const map = new Map({
   }),
 });
 
+const layerSwitcher = new LayerSwitcher();
+map.addControl(layerSwitcher);
+
+// popup
 const info = document.getElementById('info');
 
 let currentFeature;

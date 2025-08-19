@@ -5,17 +5,20 @@
 
 import Map from 'ol/Map';
 import View from 'ol/View';
-import Style from 'ol/style/Style';
 import TileLayer from 'ol/layer/Tile';
 import { useGeographic } from 'ol/proj';
 import ImageLayer from 'ol/layer/Image';
 import ImageTileSource from 'ol/source/ImageTile';
 import VectorSource from 'ol/source/Vector';
+import VectorTileSource from 'ol/source/VectorTile';
 import WebGLLayer from 'ol/layer/WebGLTile';
 import VectorLayer from 'ol/layer/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import XYZ from 'ol/source/XYZ';
 import {ImageArcGISRest, OSM} from 'ol/source';
-import GeoJSON from 'ol/format/GeoJSON';
+import { GeoJSON, MVT } from 'ol/format';
+import Style from 'ol/style/Style';
+import { applyStyle } from 'ol-mapbox-style';
 import {defaults as defaultControls} from 'ol/control/defaults';
 import OverviewMap from "ol/control/OverviewMap";
 import {defaults as defaultInteractions} from 'ol/interaction/defaults';
@@ -26,6 +29,7 @@ import { createStyleFunction } from 'ol/Feature';
 import MousePosition from 'ol/control/MousePosition';
 import {createStringXY} from 'ol/coordinate';
 
+import { applyTransform  } from 'ol/extent';
 // This was a test that draws a circle on the maps
 import Circle from 'ol/geom/Circle';
 import CircleStyle from 'ol/style/Circle';
@@ -40,6 +44,8 @@ import Collection from 'ol/Collection';
 import { LoadCrashData } from './load_data';
 import { LoadPictures } from './load_data';
 import { createMinMaxResolution } from 'ol/resolutionconstraint';
+
+import LayerSwitcher from './layerswitcher';
 
 window.onload = init
 useGeographic(); // use WGS84 coordinates in this project
@@ -305,6 +311,7 @@ function init() {
         stroke: new Stroke({color: 'black', width: 1}),
     });
     provincesLayer = new VectorLayer({
+        title: 'Provinces', 
         source: ds_provinces,
         minZoom: 10,
         maxZoom: 4,
@@ -334,19 +341,17 @@ function init() {
         format: new GeoJSON(),
     });
 
+    const arcgis_server = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
+    const arcgis_tile_server = 'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/'
+
     // overview map control
 
     // For different ESRI basemaps,
     // see http://arcgisonline.com/home/search.html?q=base%20map%20name&t=content
-    const ds_arcgis = new ImageTileSource({
-        attributions:
-          'Tiles © <a href="https://services.arcgisonline.com/arcgis/' +
-          'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
-        url:
-          'https://server.arcgisonline.com/arcgis/rest/services/' +
-          'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    const ds_arcgisWorldTopo = new ImageTileSource({
+        url: arcgis_server + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
     });
-    const baseLayer = new WebGLLayer({source:ds_arcgis});
+    const arcgisWorldTopoLayer = new WebGLLayer({source:ds_arcgisWorldTopo});
     
     const overview_context = {
         getSize: 3,
@@ -390,7 +395,7 @@ function init() {
         target: 'overviewmap',
         className: 'ol-custom-overviewmap',
         layers: [
-            baseLayer,
+            arcgisWorldTopoLayer,
             provincesLayer,
         ],
         collapsed: false,
@@ -438,14 +443,32 @@ function init() {
     //
     // "detail" aka MAIN map, the big one on the right
 
-    const mapControls = [
-        //new ol.Control.Navigation(),
-        //new ol.Control.PanZoomBar(),
-        //new ol.Control.LayerSwitcher()
-    ];
-    const esriWorldImagery = 
-        'https://services.arcgisonline.com/ArcGIS/rest/services/' +
-        'World_Imagery/MapServer'
+    const ds_arcgisWorldImagery = new ImageArcGISRest({
+        ratio: 1,
+        params: {},
+        url: arcgis_server + 'World_Imagery/MapServer',
+    })
+    const arcgisWorldImageryLayer = 
+        new ImageLayer({
+            title: 'Esri World Imagery',
+            type: 'base',
+            source: ds_arcgisWorldImagery,
+        });
+
+    const refVectorUrl = arcgis_tile_server + 'tile/{z}/{y}/{x}.pbf';
+    const refStyleUrl = arcgis_tile_server + 'resources/styles/';
+    console.log(refStyleUrl);
+    const arcgisWorldImageryReferenceLayer = new VectorTileLayer({
+        title: 'Esri World Imagery Labels',
+        source: new VectorTileSource({
+            format: new MVT(),
+            url: refVectorUrl,
+            maxZoom: 20, 
+        }),
+        //style:
+        //opacity: 0.7,
+    });
+    applyStyle(arcgisWorldImageryReferenceLayer, refStyleUrl);
 
     const defaultStyleMap = new Style({
         fillColor: "#FFFFFF",
@@ -497,24 +520,25 @@ function init() {
     //crashStyle.addUniqueValueRules("default", "service", service_lut);
     //crashStyle.addUniqueValueRules("select", "service", service_lut);
     const crashLayer = new VectorLayer({
+        title: 'Crash sites',
         source: ds_crash_sites,
         style: crashStyle,
         //strategies: [new ol.Strategy.Fixed()],
     });
     const pplVmLayer = new VectorLayer({
+        title: 'Pop. places: Viet Nam',
         source: ds_ppl_vm,
         //strategies: [new ol.Strategy.Fixed()],
     });
-    pplVmLayer.set('layerName', 'Pop. places: Viet Nam');
     const pplCbLayer = new VectorLayer({
+        title: 'Pop. places: Cambodia',
         source: ds_ppl_cb,
         //strategies: [new ol.Strategy.Fixed()],
     });
-    pplCbLayer.set('layerName', 'Pop. places: Cambodia');
     const pplLaLayer = new VectorLayer({
+        title: 'Pop. places: Laos',
         source: ds_ppl_la,
     });
-    pplLaLayer.set('layerName', 'Pop. places: Laos');
 
     // Topo map overlay layer
     const minX = 104, minY = 8
@@ -649,30 +673,31 @@ function init() {
     loadcsv(data_server + 'CSV/roushx.csv')
     .then(data => LoadCrashData(data, ds_crash_sites))
 
+    const mapControls = [
+        //new ol.Control.Navigation(),
+        new LayerSwitcher(),
+        mousePositionControl,
+          //overviewMapControl, // this control does not work for us
+    ];
+
     detailmap = new Map({
         target: 'detailmap',
         layers: [
             new TileLayer({
+                title: 'OpenStreetMap',
+                type: 'base',
                 source: new OSM(),
             }),
-            new ImageLayer({
-                source: new ImageArcGISRest({
-                    ratio: 1,
-                    params: {},
-                    url: esriWorldImagery,
-                })
-            }),
+            arcgisWorldImageryLayer,
             dmaLayer,
             provincesLayer,
+            arcgisWorldImageryReferenceLayer,
             crashLayer,
             //pplVmLayer,
             //pplCbLayer,
             //pplLaLayer,
         ],
-        controls: defaultControls().extend([
-          mousePositionControl,
-          //overviewMapControl, // this control does not work for us
-        ]),
+        controls: defaultControls({attribution:false}).extend(mapControls),
         view: new View({center:INDOCHINA_CENTER, zoom:5}),
         //units: "m",
         //maxResolution: 156543.0339,
@@ -688,6 +713,7 @@ function init() {
         display_crash_site(e.pixel, e.originalEvent.target);
     });
 
+    
     /*
     // The detailmap instantiates the overview map so this has to happen
     // after creating the detailmap.
