@@ -5,6 +5,7 @@
 
 import Map from 'ol/Map';
 import View from 'ol/View';
+import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import { useGeographic } from 'ol/proj';
 import ImageLayer from 'ol/layer/Image';
@@ -45,8 +46,9 @@ import { LoadCrashData } from './load_data';
 import { LoadPictures } from './load_data';
 import { createMinMaxResolution } from 'ol/resolutionconstraint';
 
-import LayerSwitcher from './layerswitcher';
+import StadiaMaps from 'ol/source/StadiaMaps';
 
+import LayerSwitcher from 'ol-layerswitcher';
 window.onload = init
 useGeographic(); // use WGS84 coordinates in this project
 

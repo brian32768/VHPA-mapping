@@ -15,7 +15,7 @@ export const LoadPictures = (data, key, lut) => {
 }
 
 function togjson(data, vectorSource) {
-  console.log('togson', vectorSource)
+  //console.log('togson', vectorSource)
   let features = [];
   data.forEach(row => {
     const mgrsPoint = row['mgrs'];
