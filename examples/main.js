@@ -33,6 +33,8 @@ import { LoadCrashData } from '../client/load_data';
 import { LoadPictures } from '../client/load_data';
 import Collection from 'ol/Collection';
 
+import { mapboxToken } from '../secrets'
+
 const pictures = new Array(); // Lookup table of helicopter pictures
 const crash_sites = new Array();
 
@@ -118,7 +120,6 @@ const refVectorUrl = arcgis_tile_server + 'tile/{z}/{y}/{x}.pbf';
 // esri styles
 const refStyleUrl = arcgis_tile_server + 'resources/styles/';
 
-const mapboxToken = 'pk.eyJ1IjoiZHJ1bml4IiwiYSI6ImNsemhvaHdpajA3Mm0ycHB6bGpweDJsY2sifQ.NHZkHij8-gz_w6nPzW72Bg'
 const mapboxStreetsUrl = 'https://api.mapbox.com/v4/' +
     'mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf' + 
     '?access_token=' + mapboxToken;

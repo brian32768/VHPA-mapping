@@ -1,3 +1,6 @@
+@import "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.css";
+@import "./layerswitcher.css";
+
 body {
     font-family: verdana, geneva, sans-serif;
     font-size: 16px;
@@ -199,17 +202,5 @@ h2 {
 }
 .close-btn:hover {
     color: #e00;
-}
-
-/* Layer switcher */
-.ol-layer-switcher {
-    background: white;
-    padding: 0.5em;
-    border-radius: 8px;
-    font-size: 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    margin: 8px;
-    min-width: 110px;
-    max-width: 200px;
 }
 

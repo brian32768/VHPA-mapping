@@ -18,6 +18,7 @@ import VectorTileLayer from 'ol/layer/VectorTile';
 import XYZ from 'ol/source/XYZ';
 import {ImageArcGISRest, OSM} from 'ol/source';
 import { GeoJSON, MVT } from 'ol/format';
+import { mapboxToken } from '../secrets';
 import Style from 'ol/style/Style';
 import { applyStyle } from 'ol-mapbox-style';
 import {defaults as defaultControls} from 'ol/control/defaults';
@@ -49,6 +50,8 @@ import { createMinMaxResolution } from 'ol/resolutionconstraint';
 import StadiaMaps from 'ol/source/StadiaMaps';
 
 import LayerSwitcher from 'ol-layerswitcher';
+
+
 window.onload = init
 useGeographic(); // use WGS84 coordinates in this project
 
@@ -195,7 +198,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 
-const display_crash_site = (pixel, target) => {
+const displayFeatureInfo = (pixel, target) => {
     //console.log("crash data", pixel, target);
     const feature = target.closest('.ol-control')
         ? undefined
@@ -207,9 +210,14 @@ const display_crash_site = (pixel, target) => {
         info.style.left = (pixel[0] + 200) + 'px';
         info.style.top = (pixel[1] + 50) + 'px';
         if (feature !== currentFeature) {
+            const mgrs = feature.get('mgrs');
+            if (!mgrs) {
+                info.style.visibility = 'hidden';
+                return;
+            }
+
             info.style.visibility = 'visible';
 
-            const mgrs = feature.get('mgrs');
 
             const unit = feature.get('unit') + ' ';
             info.innerHTML = unit? unit : 'no unit'
@@ -244,16 +252,17 @@ const display_crash_site = (pixel, target) => {
                 let model = feature.get('model')
                 const url = pictures[model]['url']
                 if (url) {
+                    const a = document.createElement('a');
+
                     img.src = url;
                     img.alt = 'Helicopter database image.';
                     img.width = 200;
                     crash_text.appendChild(img);
                     //openModal(url);
-            const a = document.createElement('a');
-            a.href = url;
-            a.textContent = 'bigger photo';
-            a.target = '_blank';
-            crash_text.appendChild(a);
+                    a.href = url;
+                    a.textContent = 'bigger photo';
+                    a.target = '_blank';
+                    crash_text.appendChild(a);
 
                 } else {
                     const p = document.createElement('p');
@@ -445,32 +454,62 @@ function init() {
     //
     // "detail" aka MAIN map, the big one on the right
 
-    const ds_arcgisWorldImagery = new ImageArcGISRest({
-        ratio: 1,
-        params: {},
-        url: arcgis_server + 'World_Imagery/MapServer',
+    const stadiaLayers = new LayerGroup({
+      title: 'Water color with labels',
+      type: 'base',
+      combine: true,
+      visible: true,
+      layers: [
+          new TileLayer({
+              source: new StadiaMaps({
+                  layer: 'stamen_watercolor',
+              }),
+          }),
+          new TileLayer({
+              source: new StadiaMaps({
+                  layer: 'stamen_terrain_labels',
+              })
+          })
+      ],
     })
-    const arcgisWorldImageryLayer = 
-        new ImageLayer({
-            title: 'Esri World Imagery',
-            type: 'base',
-            source: ds_arcgisWorldImagery,
-        });
 
-    const refVectorUrl = arcgis_tile_server + 'tile/{z}/{y}/{x}.pbf';
-    const refStyleUrl = arcgis_tile_server + 'resources/styles/';
-    console.log(refStyleUrl);
-    const arcgisWorldImageryReferenceLayer = new VectorTileLayer({
-        title: 'Esri World Imagery Labels',
-        source: new VectorTileSource({
-            format: new MVT(),
-            url: refVectorUrl,
-            maxZoom: 20, 
-        }),
-        //style:
-        //opacity: 0.7,
+    const mapboxStreetsUrl = 'https://api.mapbox.com/v4/' +
+        'mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf' + 
+        '?access_token=' + mapboxToken;
+    const mapboxStyle = 'https://api.mapbox.com/styles/v1/mapbox/streets-v11' + 
+        '?access_token=' + mapboxToken;
+    const mapboxStreetsSource = new VectorTileSource({
+        url: mapboxStreetsUrl,
+        format: new MVT(),
+        attributions:
+        '© <a href="https://www.mapbox.com/about/maps/" target="_blank">Mapbox</a>'
     });
-    applyStyle(arcgisWorldImageryReferenceLayer, refStyleUrl);
+    const mapboxStreetsLayer = new VectorTileLayer({
+        title: 'Mapbox Streets',
+        type: 'base',
+        visible: false,
+        source: mapboxStreetsSource,
+    })
+    applyStyle(mapboxStreetsLayer, mapboxStyle)
+    .then(() => {
+        console.log('streets styled');
+    })
+    .catch((err) => {
+        console.error('Mapbox style loading error:', err);
+    });
+    // Mapbox Satellite raster tiles URL template
+    const mapboxSatelliteUrl = 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x' +
+        `?access_token=${mapboxToken}`;
+    const mapboxSatelliteLayer = new TileLayer({
+    title: 'Mapbox Imagery',
+    type: 'base',
+    visible: true,
+    source: new XYZ({
+            url: mapboxSatelliteUrl,
+            attributions:
+            '© <a href="https://www.mapbox.com/about/maps/" target="_blank">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+        })
+    });
 
     const defaultStyleMap = new Style({
         fillColor: "#FFFFFF",
@@ -677,7 +716,12 @@ function init() {
 
     const mapControls = [
         //new ol.Control.Navigation(),
-        new LayerSwitcher(),
+        new LayerSwitcher({
+            activationMode: 'click',
+            tipLabel: 'Show layer list',
+            collapseTipLabel: 'Hide layer list',
+            groupSelectStyle: 'children', // or use 'none'
+        }),
         mousePositionControl,
           //overviewMapControl, // this control does not work for us
     ];
@@ -689,12 +733,20 @@ function init() {
                 title: 'OpenStreetMap',
                 type: 'base',
                 source: new OSM(),
+                visible: false,
             }),
-            arcgisWorldImageryLayer,
-            dmaLayer,
-            provincesLayer,
-            arcgisWorldImageryReferenceLayer,
-            crashLayer,
+            mapboxStreetsLayer,
+            mapboxSatelliteLayer,
+
+            new LayerGroup({
+                title: 'Overlays',
+                layers: [
+                    dmaLayer,
+                    provincesLayer,
+                    crashLayer
+                ]
+            }),
+
             //pplVmLayer,
             //pplCbLayer,
             //pplLaLayer,
@@ -712,7 +764,7 @@ function init() {
             return;
         }
     // Highlight the province on overviewmap and show the province data           
-        display_crash_site(e.pixel, e.originalEvent.target);
+        displayFeatureInfo(e.pixel, e.originalEvent.target);
     });
 
     
