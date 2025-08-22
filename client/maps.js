@@ -49,6 +49,7 @@ import { createMinMaxResolution } from 'ol/resolutionconstraint';
 
 import StadiaMaps from 'ol/source/StadiaMaps';
 
+//https://github.com/walkermatt/ol-layerswitcher
 import LayerSwitcher from 'ol-layerswitcher';
 
 
@@ -536,45 +537,57 @@ function init() {
         getOpacity: layerOpacity,
         getColor: "#FFFF00" // default color, we'll change it later
     };
-    let crashStyles = {};
-    crashStyles['Point'] = [
-      new Style({
-        image: new CircleStyle({
-          radius: 10,
-          fill: new Fill({
-            color: [255,0,255,255],
-          }),
-          stroke: new Stroke({
-            color: [255,255,0,0],
-            width: 1,
-          }),
-        }),
-        zIndex: Infinity,
-      }),
-    ];
-    const crashStyle = (feature) => {
-      const t = feature;
-      //console.log('f=', t);
-      return crashStyles[t.getGeometry().getType()];
-    }
+    
+
+    // =============================================================================
+    // this table is used to put text in description and to define colors on map
+    const service_lut = {
+        'AR': { "service": "U.S. Army", fillColor: "#006D2C" }, // dark green
+        'AF': { "service": "U.S. Air Force", fillColor: "#0E0296" },// light blue
+        'MC': { "service": "U.S. Marine Corps", fillColor: "#0E0296" },// dark blue
+        'NA': { "service": "U.S. Navy", fillColor: "#246DED" }, // blue
+        'CG': { "service": "U.S. Coast Guard", fillColor: "#E87941" }, // orange
+        'AN': { "service": "Australian Navy", fillColor: "#F25EA1" }, // reddish
+        'AA': { "service": "Air America", fillColor: "#FF0000" }, // red
+        'VF': { "service": "Vietnam Air Force", fillColor: "#F2E15E" }, // yellow-orange
+        // added 2025-08-21 see https://www.army.gov.au/about-us/army-corps/royal-australian-army-medical-corps
+        'RA': { "service": "Royal Australian Army Medical Corps", fillColor: "#8F0000" }, // maroon
+        '': { "service": "Undefined", fillColor: "#FFFFFF" }, // white
+    };
+
     // Set the color of each point by looking up the value of the Service attribute
-    //crashStyle.addUniqueValueRules("default", "service", service_lut);
-    //crashStyle.addUniqueValueRules("select", "service", service_lut);
+    // https://openlayers.org/en/latest/examples/icon-color.html
+    let crashStyles = new Array();
+    for (const [k,s] of Object.entries(service_lut)) {
+        crashStyles[k] = new Style({
+            image: new CircleStyle({
+                radius: 6,
+                fill: new Fill({
+                    color: s.fillColor,
+                }),
+                stroke: new Stroke({
+                    color: [255,255,0,0],
+                    width: 1,
+                }),
+            }),
+            zIndex: Infinity,
+        })
+    }
     const crashLayer = new VectorLayer({
         title: 'Crash sites',
         source: ds_crash_sites,
-        style: crashStyle,
-        //strategies: [new ol.Strategy.Fixed()],
+        style: function(feature) {
+            return crashStyles[feature.get('service')];
+        },
     });
+
     const pplVmLayer = new VectorLayer({
         title: 'Pop. places: Viet Nam',
         source: ds_ppl_vm,
-        //strategies: [new ol.Strategy.Fixed()],
     });
     const pplCbLayer = new VectorLayer({
         title: 'Pop. places: Cambodia',
         source: ds_ppl_cb,
-        //strategies: [new ol.Strategy.Fixed()],
     });
     const pplLaLayer = new VectorLayer({
         title: 'Pop. places: Laos',
@@ -880,20 +893,6 @@ function show_province_data(pixel, target) {
         }
     }
 }
-
-// =============================================================================
-// this table is used to put text in description and to define colors on map
-var service_lut = {
-    'AR': { "service": "U.S. Army", fillColor: "#006D2C" }, // dark green
-    'AF': { "service": "U.S. Air Force", fillColor: "#0E0296" },// light blue
-    'MC': { "service": "U.S. Marine Corps", fillColor: "#0E0296" },// dark blue
-    'NA': { "service": "U.S. Navy", fillColor: "#246DED" }, // blue
-    'CG': { "service": "U.S. Coast Guard", fillColor: "#E87941" }, // orange
-    'AN': { "service": "Australian Navy", fillColor: "#F25EA1" }, // reddish
-    'AA': { "service": "Air America", fillColor: "#FF0000" }, // red
-    'VF': { "service": "Vietnam Air Force", fillColor: "#F2E15E" }, // yellow-orange
-    '': { "service": "Undefined", fillColor: "#FFFFFF" }, // white
-};
 
 function show_crash_data(f) {
     //    console.log("show_crash_data", f)
