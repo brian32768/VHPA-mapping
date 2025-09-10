@@ -1,6 +1,7 @@
 {
     "name": "bing-maps",
     "dependencies": {
+        "bootstrap": "^5.3.8",
         "d3-fetch": "^3.0.1",
         "mgrs": "^2.1.0",
         "ol": "^10.6.1",

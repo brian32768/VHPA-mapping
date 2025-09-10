@@ -26,14 +26,13 @@ import StadiaMaps from 'ol/source/StadiaMaps';
 
 import LayerSwitcher from 'ol-layerswitcher';
 
-//import LayerSwitcher from './layerswitcher'; // local version
-
-
 import { LoadCrashData } from '../client/load_data';
 import { LoadPictures } from '../client/load_data';
 import Collection from 'ol/Collection';
 
 import { mapboxToken } from '../secrets'
+
+import * as bootstrap from 'bootstrap'
 
 const pictures = new Array(); // Lookup table of helicopter pictures
 const crash_sites = new Array();

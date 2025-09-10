@@ -39,20 +39,40 @@
         margin: 8px;
         min-width: 110px;
       }
-    </style>  </head>
+  </style>  
+    <link rel="stylesheet" href="scss/styles.scss">
+    <script type="module" src="main.js"></script>
   </head>
   <body>
-  <script type="module" src="main.js"></script>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col">
+          <div id="overviewmap" class="map">
+            overview
+          </div>
+        </div>
+        <div class="col-6">
+          <div id="map" class="map">
+            <div id="info"></div>
+          </div>
+        </div>
+        <div class="col">
+          <button class="btn btn-primary">Primary button</button>
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col">
+          <h2>T1</h2>
+          <div id="t1">t1 table</div>
+      </div>
+        <div class="col">
+          <h2>T2</h2>
+          <div id="t2">t2 table</div>
+        </div>
+      </div>
+    </div>
 
-  <div id="map" class="map">
-    <div id="info"></div>
-  </div>
-
-  <h2>T1</h2>
-  <div id="t1"></div>
-
-  <h2>T2</h2>
-  <div id="t2"></div>
 
   </body>
 </html>
